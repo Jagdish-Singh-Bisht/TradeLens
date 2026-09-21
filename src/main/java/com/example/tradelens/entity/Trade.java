@@ -6,6 +6,7 @@ import jakarta.persistence.Table;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Id;
 
 import lombok.AllArgsConstructor;
@@ -46,5 +47,8 @@ public class Trade {
     private LocalDateTime exitTime;
 
     private BigDecimal profitLoss;
+
+    @OneToOne
+    private Decision decision;
 
 }
