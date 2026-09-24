@@ -43,6 +43,8 @@ public class CsvImportService {
 
     private final ExecutionRepository executionRepository;
 
+    private final TradeReconstructionService tradeReconstructionService;
+
     @Transactional
     public void importExecutions(Long brokerAccountId, MultipartFile file) {
 
@@ -104,7 +106,9 @@ public class CsvImportService {
                 execution.setPrice(row.price());
                 execution.setExecutedAt(row.executedAt());
 
-                executionRepository.save(execution);
+                Execution savedExecution = executionRepository.save(execution);
+
+                tradeReconstructionService.processExecution(savedExecution);
 
                 System.out.println(row);
             }
