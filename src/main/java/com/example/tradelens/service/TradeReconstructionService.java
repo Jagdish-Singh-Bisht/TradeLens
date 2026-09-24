@@ -14,6 +14,9 @@ import java.util.Queue;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.HashMap;
+
 
 
 
@@ -22,7 +25,7 @@ import java.time.LocalDateTime;
 @Service
 public class TradeReconstructionService  {
 
-    private final Queue<OpenPosition> openPositions = new LinkedList<>();
+    private final Map<PositionKey, Queue<OpenPosition>> openPositions = new HashMap<>();
 
     private final TradeRepository tradeRepository;
 
@@ -33,13 +36,23 @@ public class TradeReconstructionService  {
 
     public void processExecution(Execution execution) {
 
+        PositionKey key = new PositionKey(
+                execution.getBrokerAccount().getId(),
+                execution.getInstrument().getId()
+        );
+
+        Queue<OpenPosition> queue = openPositions.computeIfAbsent(
+                key,
+                k -> new LinkedList<>()
+        );
+
         if(execution.getSide() == ExecutionSide.BUY) {
-            openPositions.add(new OpenPosition(execution));
+            queue.add(new OpenPosition(execution));
         }
 
         else if(execution.getSide() == ExecutionSide.SELL) {
 
-            if(openPositions.isEmpty()) {
+            if(queue.isEmpty()) {
                 throw new IllegalStateException(
                         "Cannot process SELL without an open position"
                 );
@@ -54,9 +67,9 @@ public class TradeReconstructionService  {
             LocalDateTime entryTime = null;
 
             while (remainingSellQuantity.compareTo(BigDecimal.ZERO) > 0
-                    && !openPositions.isEmpty()) {
+                    && !queue.isEmpty()) {
 
-                OpenPosition position = openPositions.peek();
+                OpenPosition position = queue.peek();
 
                 if(entryTime == null) {
                     entryTime = position.getExecution().getExecutedAt();
@@ -87,7 +100,7 @@ public class TradeReconstructionService  {
                         .subtract(matchedQuantity);
 
                 if(remainingBuyQuantity.compareTo(BigDecimal.ZERO) == 0) {
-                    openPositions.poll();
+                    queue.poll();
                 }
             }
 
@@ -115,6 +128,10 @@ public class TradeReconstructionService  {
             trade.setProfitLoss(totalProfitLoss);
 
             tradeRepository.save(trade);
+
+            if(queue.isEmpty()) {
+                openPositions.remove(key);
+            }
 
         }
     }

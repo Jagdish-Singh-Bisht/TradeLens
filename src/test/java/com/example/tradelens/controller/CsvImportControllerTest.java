@@ -2,16 +2,13 @@ package com.example.tradelens.controller;
 
 
 
-import com.example.tradelens.entity.enums.ExecutionSide;
+import com.example.tradelens.entity.Trade;
 import com.example.tradelens.entity.Execution;
 import com.example.tradelens.entity.Instrument;
 import com.example.tradelens.entity.User;
 import com.example.tradelens.entity.BrokerAccount;
 import com.example.tradelens.entity.enums.InstrumentType;
-import com.example.tradelens.repository.BrokerAccountRepository;
-import com.example.tradelens.repository.ExecutionRepository;
-import com.example.tradelens.repository.InstrumentRepository;
-import com.example.tradelens.repository.UserRepository;
+import com.example.tradelens.repository.*;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,8 +26,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
-import java.math.BigDecimal;
 import java.util.List;
+import java.math.BigDecimal;
 
 
 @SpringBootTest
@@ -52,6 +49,9 @@ public class CsvImportControllerTest {
 
     @Autowired
     private ExecutionRepository executionRepository;
+
+    @Autowired
+    private TradeRepository tradeRepository;
 
     @Test
     void shouldAcceptCsvFile() throws Exception {
@@ -108,6 +108,16 @@ public class CsvImportControllerTest {
 
         assertEquals(3, executions.size());
 
+        List<Trade> trades = tradeRepository.findAll();
+
+        assertEquals(1, trades.size());
+
+        Trade trade = trades.get(0);
+
+        assertEquals(new BigDecimal("50"), trade.getQuantity());
+        assertEquals(new BigDecimal("1400.80"), trade.getEntryPrice());
+        assertEquals(new BigDecimal("1430.00"), trade.getExitPrice());
+        assertEquals(new BigDecimal("1460.00"), trade.getProfitLoss());
 
     }
 
