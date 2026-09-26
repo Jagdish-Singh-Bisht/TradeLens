@@ -104,7 +104,7 @@ public class CsvImportControllerTest {
                 .andExpect(status().isOk());
 
         List<Execution> executions = executionRepository
-                .findAll();
+                .findByBrokerAccount(brokerAccount);
 
         assertEquals(3, executions.size());
 
