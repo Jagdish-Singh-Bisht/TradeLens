@@ -71,7 +71,7 @@ public class CsvImportControllerTest {
         brokerAccount = brokerAccountRepository.save(brokerAccount);
 
         Instrument instrument = new Instrument();
-        instrument.setSymbol("RELIANCE");
+        instrument.setSymbol("TEST_RELIANCE");
         instrument.setExchange("NSE");
         instrument.setType(InstrumentType.EQUITY);
 
@@ -85,9 +85,9 @@ public class CsvImportControllerTest {
                 "text/csv",
                 """
                 order_id,symbol,exchange,side,quantity,price,executed_at
-                ORD001,RELIANCE,NSE,BUY,30,1400.00,2026-09-23T09:30:00
-                ORD002,RELIANCE,NSE,BUY,40,1402.00,2026-09-23T09:31:00
-                ORD003,RELIANCE,NSE,SELL,50,1430.00,2026-09-23T10:15:00
+                ORD001,TEST_RELIANCE,NSE,BUY,30,1400.00,2026-09-23T09:30:00
+                ORD002,TEST_RELIANCE,NSE,BUY,40,1402.00,2026-09-23T09:31:00
+                ORD003,TEST_RELIANCE,NSE,SELL,50,1430.00,2026-09-23T10:15:00
                 """.getBytes()
         );
 
@@ -108,7 +108,7 @@ public class CsvImportControllerTest {
 
         assertEquals(3, executions.size());
 
-        List<Trade> trades = tradeRepository.findAll();
+        List<Trade> trades = tradeRepository.findByBrokerAccount(brokerAccount);
 
         assertEquals(1, trades.size());
 

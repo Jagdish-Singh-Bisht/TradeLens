@@ -114,6 +114,8 @@ public class CsvImportService {
             }
 
         } catch(Exception e) {
+            e.printStackTrace();
+
             throw new InvalidCsvException(
                     "Failed to read CSV file",
                     e
