@@ -17,71 +17,21 @@ import java.math.BigDecimal;
 @Service
 public class TradeAnalyticsService {
 
-    private TradeRepository tradeRepository;
+    private final TradeRepository tradeRepository;
 
-    public TradeAnalyticsService(TradeRepository tradeRepository) {
+    private final TradeAnalyticsCalculator analyticsCalculator;
+
+    public TradeAnalyticsService(TradeRepository tradeRepository,
+                                 TradeAnalyticsCalculator analyticsCalculator) {
         this.tradeRepository = tradeRepository;
+        this.analyticsCalculator = analyticsCalculator;
     }
 
     public TradeAnalyticsResponse getAnalytics(BrokerAccount brokerAccount) {
 
        List<Trade> trades = tradeRepository.findByBrokerAccount(brokerAccount);
 
-       long totalTrades = trades.size();
-
-       long winningTrades = trades.stream()
-               .filter(trade -> trade.getProfitLoss().compareTo(BigDecimal.ZERO) > 0)
-               .count();
-
-       long losingTrades = trades.stream()
-               .filter(trade -> trade.getProfitLoss().compareTo(BigDecimal.ZERO) < 0)
-               .count();
-
-       // From all trades, take their P&L, keep only positive P&L values, and add them together.
-       BigDecimal totalProfitLoss = trades.stream()
-               .map(Trade::getProfitLoss)
-               .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-       BigDecimal grossProfit = trades.stream()
-               .map(Trade::getProfitLoss)
-               .filter(profitLoss -> profitLoss.compareTo(BigDecimal.ZERO) > 0)
-               .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-       BigDecimal grossLoss = trades.stream()
-               .map(Trade::getProfitLoss)
-               .filter(profitLoss -> profitLoss.compareTo(BigDecimal.ZERO) < 0)
-               .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-       BigDecimal winRate = calculateWinRate(
-               winningTrades,
-               totalTrades
-       );
-
-       BigDecimal averageProfit = calculateAverage(
-               grossProfit,
-                winningTrades
-       );
-
-       BigDecimal averageLoss = calculateAverage(
-               grossLoss.abs(),
-               losingTrades
-       );
-
-       BigDecimal profitFactor = calculateProfitFactor(
-               grossProfit,
-               grossLoss
-       );
-
-       return new TradeAnalyticsResponse(
-               totalTrades,
-               winningTrades,
-               losingTrades,
-               winRate,
-               totalProfitLoss,
-               averageProfit,
-               averageLoss,
-               profitFactor
-       );
+       return analyticsCalculator.calculate(trades);
 
     }
 
