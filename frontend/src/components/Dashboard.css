@@ -1,0 +1,64 @@
+main {
+    padding: 30px;
+    background: #f5f6f8;
+    min-height: 100%;
+}
+
+main h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.summary-cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+}
+
+.summary-card {
+    border: 1px solid #ddd;
+    padding: 16px;
+    border-radius: 8px;
+    width: 200px;
+}
+
+.summary-card h3 {
+    margin: 0;
+}
+
+.summary-card p {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.strategy-section {
+    margin-top: 30px;
+}
+
+.strategy-section table {
+    width:100%;
+    border-collapse: collapse;
+    background: white;
+}
+
+.strategy-section th,
+.strategy-section td {
+    padding: 14px;
+    border-bottom: 1px solid #e5e5e5;
+    text-align: left;
+}
+
+.strategy-section th {
+    font-size: 14px;
+}
+
+.behavior-section {
+    margin-top: 30px;
+}
+
+.behavior-cards {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 20px;
+
+}

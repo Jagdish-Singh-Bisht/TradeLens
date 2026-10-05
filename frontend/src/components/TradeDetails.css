@@ -1,0 +1,202 @@
+.trade-summary {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.trade-title {
+    margin-bottom: 24px;
+}
+
+.trade-title h3 {
+    display: inline;
+    margin: 0;
+    font-size: 22px;
+}
+
+.trade-title span {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: #f1f3f5;
+    color: #666;
+    font-size: 12px;
+    vertical-align: middle;
+}
+
+.trade-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.trade-stat {
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.trade-stat span,
+.trade-time span {
+    display: block;
+    margin-bottom: 6px;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.trade-stat strong {
+    font-size: 18px;
+}
+
+.trade-time {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 16px;
+}
+
+.trade-time div {
+    padding: 14px 16px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.trade-time strong {
+    font-size: 14px;
+}
+
+.decision-section {
+    margin-bottom: 24px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.section-header h3 {
+    margin: 0;
+    font-size: 18px;
+}
+
+.section-header span {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.decision-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.decision-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 16px;
+}
+
+.decision-item {
+    padding: 14px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.decision-item span,
+.decision-reasons span {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 13px;
+    color: #6b7280;
+}
+
+.decision-item strong {
+    font-size: 15px;
+}
+
+.decision-reasons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.decision-reasons div {
+    padding: 14px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.decision-reasons p {
+    margin: 0;
+    line-height: 1.5;
+    font-size: 14px;
+}
+
+.analysis-section {
+    margin-bottom: 24px;
+}
+
+.analysis-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.analysis-group + .analysis-group {
+    margin-top: 24px;
+    padding-top: 24px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.analysis-group h4 {
+    margin: 0 0 14px;
+    font-size: 15px;
+}
+
+.analysis-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+}
+
+.analysis-grid div {
+    padding: 14px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.analysis-grid span {
+    display: block;
+    margin-bottom: 6px;
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.analysis-grid strong {
+    font-size: 15px;
+}
+
+.analysis-status {
+    display: flex;
+    gap: 30px;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid #e5e7eb;
+    font-size: 14px;
+}
+
+.loading-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+}
