@@ -30,6 +30,11 @@
   background: #333;
 }
 
+.app-body aside nav a.active,
+.app-body aside nav button.active {
+  background: #333;
+}
+
 .header {
   background: #ffffff;
   border-bottom: 1px solid #ddd;

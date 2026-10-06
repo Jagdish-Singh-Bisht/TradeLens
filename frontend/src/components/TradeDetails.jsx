@@ -433,6 +433,80 @@ function TradeDetails({ tradeId }) {
 
             </section>
 
+            <section className="market-section">
+                <div className="section-header">
+                    <h3>Market Context</h3>
+                    <span>Price movement during and after trade</span>
+                </div>
+
+                {!mfe || !mae || !postExitMovement ? (
+                    <div className="loading-card">
+                        <p>Loading market context...</p>
+                    </div>
+                ) : (
+
+                    <div className="market-card">
+
+                        <div className="market-group">
+                            <h4>During Trade</h4>
+
+                            <div className="market-grid">
+
+                                <div>
+                                    <span>MFE</span>
+                                    <strong>Rs.{mfe.mfe}</strong>
+                                    <small>Maximum favorable movement</small>
+                                </div>
+
+                                <div>
+                                    <span>Highest Price</span>
+                                    <strong>Rs.{mfe.highestPrice}</strong>
+                                    <small>Highest price during trade</small>
+                                </div>
+
+                                <div>
+                                    <span>MAE</span>
+                                    <strong>Rs.{mae.mae}</strong>
+                                    <small>Maximum adverse movement</small>
+                                </div>
+
+                                <div>
+                                    <span>Lowest Price</span>
+                                    <strong>Rs.{mae.lowestPrice}</strong>
+                                    <small>Lowest price during trade</small>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                        <div className="market-group">
+                            <h4>After Exit</h4>
+
+                            <div className="market-grid">
+
+                                <div>
+                                    <span>Post-exit Movement</span>
+                                    <strong>Rs.{postExitMovement.postExitMovement}</strong>
+                                    <small>Additional favorable movement</small>
+                                </div>
+
+                                <div>
+                                    <span>Highest Price After Exit</span>
+                                    <strong>Rs.{postExitMovement.highestPriceAfterExit}</strong>
+                                    <small>Highest price after exit</small>
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                )}
+
+
+            </section>
+
         </main>
     )
 }

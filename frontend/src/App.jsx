@@ -1,3 +1,7 @@
+import MarketContext from './components/MarketContext'
+import Behavior from "./components/Behavior.jsx";
+import Strategies from "./components/Strategies";
+import Analytics from './components/Analytics'
 import TradeDetails from './components/TradeDetails'
 import Trades from './components/Trades'
 import Header from './components/Header'
@@ -26,7 +30,10 @@ function App() {
 
           <div className="app-body">
 
-              <Sidebar onNavigate={setPage} />
+              <Sidebar
+                  onNavigate={setPage}
+                  currentPage={page}
+              />
 
               { page === 'dashboard' && <Dashboard/> }
 
@@ -42,6 +49,14 @@ function App() {
               {page === 'trade-details' && (
                   <TradeDetails tradeId={selectedTradeId} />
               )}
+
+              { page === 'analytics' && <Analytics /> }
+
+              {page === 'strategies' && <Strategies />}
+
+              {page === 'behavior' && <Behavior />}
+
+              {page === 'market-context' && <MarketContext />}
 
           </div>
 

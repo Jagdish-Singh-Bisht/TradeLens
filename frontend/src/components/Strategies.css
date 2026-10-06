@@ -1,0 +1,32 @@
+.strategy-table-container {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.strategy-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.strategy-table th,
+.strategy-table td {
+    padding: 16px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.strategy-table th {
+    background: #f8f9fa;
+    color: #374151;
+    font-size: 14px;
+}
+
+.strategy-table td {
+    color: #4b5563;
+}
+
+.strategy-table tr:last-child td {
+    border-bottom: none;
+}

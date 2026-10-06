@@ -1,0 +1,37 @@
+.market-context-intro {
+    margin-bottom: 20px;
+    color: #6b7280;
+}
+
+.market-context-table-container {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.market-context-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.market-context-table th,
+.market-context-table td {
+    padding: 16px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.market-context-table th {
+    background: #f8f9fa;
+    color: #374151;
+    font-size: 14px;
+}
+
+.market-context-table td {
+    color: #4b5563;
+}
+
+.market-context-table tr:last-child td {
+    border-bottom: none;
+}

@@ -1,5 +1,5 @@
 
-function Sidebar({onNavigate}) {
+function Sidebar({onNavigate, currentPage}) {
 
     return (
         <aside>
@@ -7,18 +7,42 @@ function Sidebar({onNavigate}) {
 
             <nav>
 
-                <button onClick={() => onNavigate('dashboard')}>
+                <button
+                    className={currentPage === 'dashboard' ? 'active' : ''}
+                    onClick={() => onNavigate('dashboard')} >
                     Dashboard
                 </button>
 
-                <button onClick={() => onNavigate('trades')}>
+                <button
+                    className={currentPage === 'trades' ? 'active' : ''}
+                    onClick={() => onNavigate('trades')} >
                     Trades
                 </button>
 
-                <a href="#">Analytics</a>
-                <a href="#">Strategies</a>
-                <a href="#">Behavior</a>
-                <a href="#">Market Context</a>
+                <button
+                    className={currentPage === 'analytics' ? 'active' : ''}
+                    onClick={() => onNavigate('analytics')} >
+                    Analytics
+                </button>
+
+                <button
+                    className={currentPage === 'strategies' ? 'active' : ''}
+                    onClick={() => onNavigate('strategies')} >
+                    Strategies
+                </button>
+
+                <button
+                    className={currentPage === 'behavior' ? 'active' : ''}
+                    onClick={() => onNavigate('behavior')} >
+                    Behavior
+                </button>
+
+                <button
+                    className={currentPage === 'market-context' ? 'active' : ''}
+                    onClick={() => onNavigate('market-context')} >
+                    Market Context
+                </button>
+
             </nav>
 
         </aside>

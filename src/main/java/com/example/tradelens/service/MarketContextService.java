@@ -2,8 +2,10 @@ package com.example.tradelens.service;
 
 
 import com.example.tradelens.dto.MaeResponse;
+import com.example.tradelens.dto.MarketContextResponse;
 import com.example.tradelens.dto.MfeResponse;
 import com.example.tradelens.dto.PostExitMovementResponse;
+import com.example.tradelens.entity.BrokerAccount;
 import com.example.tradelens.entity.MarketCandle;
 import com.example.tradelens.entity.Trade;
 import com.example.tradelens.repository.MarketCandleRepository;
@@ -141,6 +143,31 @@ public class MarketContextService {
                 postExitMovement
         );
 
+    }
+
+    public List<MarketContextResponse> getMarketContext(BrokerAccount brokerAccount) {
+
+        List<Trade> trades = tradeRepository.findByBrokerAccount(brokerAccount);
+
+        return trades.stream()
+                .map(trade -> {
+
+                    MfeResponse mfe = calculateMfe(trade.getId());
+                    MaeResponse mae = calculateMae(trade.getId());
+                    PostExitMovementResponse postExit =
+                            calculatePostExitMovement(trade.getId());
+
+                    return new MarketContextResponse(
+                            trade.getId(),
+                            trade.getInstrument().getSymbol(),
+                            trade.getEntryPrice(),
+                            trade.getExitPrice(),
+                            mfe.mfe(),
+                            mae.mae(),
+                            postExit.postExitMovement()
+                    );
+                })
+                .toList();
     }
 
 
