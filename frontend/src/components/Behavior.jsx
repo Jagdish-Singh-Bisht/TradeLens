@@ -24,8 +24,12 @@ function Behavior() {
     }
 
     return (
-        <main>
-            <h2>Trading Behavior</h2>
+        <main className="behavior">
+
+            <div className="behavior-heading">
+                <h2>Trading Behavior</h2>
+                <p>Understand recurring patterns in your trading decisions.</p>
+            </div>
 
             <div className="behavior-grid">
 

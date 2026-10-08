@@ -1,3 +1,39 @@
+.behavior {
+    padding: 32px;
+    background: #f5f6f8;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+.behavior-heading {
+    margin-bottom: 30px;
+}
+
+.behavior-heading h2 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.behavior-heading p {
+    margin: 6px 0 0;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+@media (max-width: 1000px) {
+    .behavior-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .behavior-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .behavior-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);

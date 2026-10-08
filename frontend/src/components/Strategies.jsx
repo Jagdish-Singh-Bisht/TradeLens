@@ -24,8 +24,12 @@ function Strategies() {
 
     return (
 
-        <main>
-            <h2>Strategy Performance</h2>
+        <main className="strategies">
+
+            <div className="strategy-heading">
+                <h2>Strategy Performance</h2>
+                <p>Compare performance across your trading strategies.</p>
+            </div>
 
             <div className="strategy-table-container">
 

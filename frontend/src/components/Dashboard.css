@@ -1,64 +1,100 @@
-main {
-    padding: 30px;
+.dashboard {
+    padding: 32px;
     background: #f5f6f8;
-    min-height: 100%;
+    min-height: 100vh;
+    box-sizing: border-box;
 }
 
-main h2 {
-    margin-top: 0;
-    margin-bottom: 20px;
+.dashboard-heading {
+    margin-bottom: 30px;
 }
 
-.summary-cards {
+.dashboard-heading h2 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 600;
+    color: #111827;
+}
+
+.dashboard-heading p {
+    margin: 6px 0 0;
+    font-size: 14px;
+    color: #6b7280;
+}
+
+.dashboard-section {
+    margin-bottom: 30px;
+}
+
+.dashboard-section-header {
+    margin-bottom: 12px;
+}
+
+.dashboard-section-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.dashboard-cards {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 20px;
+    gap: 16px;
 }
 
-.summary-card {
-    border: 1px solid #ddd;
-    padding: 16px;
-    border-radius: 8px;
-    width: 200px;
+.dashboard-table-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
 }
 
-.summary-card h3 {
-    margin: 0;
-}
-
-.summary-card p {
-    font-size: 24px;
-    font-weight: bold;
-}
-
-.strategy-section {
-    margin-top: 30px;
-}
-
-.strategy-section table {
-    width:100%;
+.dashboard-table {
+    width: 100%;
     border-collapse: collapse;
-    background: white;
 }
 
-.strategy-section th,
-.strategy-section td {
-    padding: 14px;
-    border-bottom: 1px solid #e5e5e5;
+.dashboard-table th,
+.dashboard-table td {
+    padding: 15px 18px;
     text-align: left;
+    border-bottom: 1px solid #e5e7eb;
 }
 
-.strategy-section th {
+.dashboard-table th {
+    background: #f8f9fa;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.dashboard-table td {
+    color: #374151;
     font-size: 14px;
 }
 
-.behavior-section {
-    margin-top: 30px;
+.dashboard-table tr:last-child td {
+    border-bottom: none;
 }
 
-.behavior-cards {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 20px;
+.dashboard-empty {
+    padding: 30px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    color: #6b7280;
+}
 
+@media (max-width: 1000px) {
+    .dashboard-cards {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .dashboard-cards {
+        grid-template-columns: 1fr;
+    }
 }

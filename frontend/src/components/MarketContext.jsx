@@ -15,16 +15,24 @@ function MarketContext() {
 
     if (!marketContext) {
         return (
-            <main>
-                <h2>Market Context</h2>
+
+            <main className="market-context">
+                <div className="market-context-heading">
+                    <h2>Market Context</h2>
+                </div>
                 <p>Loading market context...</p>
             </main>
+
         )
     }
 
     return (
-        <main>
-            <h2>Market Context</h2>
+        <main className="market-context">
+
+            <div className="market-context-heading">
+                <h2>Market Context</h2>
+                <p>Understand price movement during and after your trades.</p>
+            </div>
 
             <div className="market-context-intro">
                 <p>

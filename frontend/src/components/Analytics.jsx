@@ -29,8 +29,12 @@ function Analytics() {
 
     return (
 
-        <main>
-            <h2>Trading Analytics</h2>
+        <main className="analytics">
+
+            <div className="analytics-heading">
+                <h2>Trading Analytics</h2>
+                <p>Detailed view of your overall trading performance.</p>
+            </div>
 
             <div className="analytics-grid">
 

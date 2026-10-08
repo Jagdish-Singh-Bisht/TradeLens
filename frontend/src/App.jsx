@@ -4,7 +4,7 @@ import Strategies from "./components/Strategies";
 import Analytics from './components/Analytics'
 import TradeDetails from './components/TradeDetails'
 import Trades from './components/Trades'
-import Header from './components/Header'
+// import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import Dashboard from './components/Dashboard'
 import Login from './components/Login'
@@ -26,7 +26,6 @@ function App() {
 
   return (
       <div className="app">
-          <Header title="TradeLens Dashboard"/>
 
           <div className="app-body">
 

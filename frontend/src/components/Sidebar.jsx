@@ -2,10 +2,14 @@
 function Sidebar({onNavigate, currentPage}) {
 
     return (
-        <aside>
-            <h2>TradeLens</h2>
+        <aside className="sidebar">
 
-            <nav>
+            <div className="sidebar-brand">
+                <h2>TradeLens</h2>
+                <span>Trading Analytics</span>
+            </div>
+
+            <nav className="sidebar-nav">
 
                 <button
                     className={currentPage === 'dashboard' ? 'active' : ''}

@@ -1,49 +1,64 @@
 .app-body {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr);
-  min-height: calc(100vh - 61px);
+  grid-template-columns: 240px minmax(0, 1fr);
+  min-height: 100vh;
 }
 
-.app-body aside {
-  background: #1e1e1e;
+.sidebar {
+  background: #111827;
+  color: #ffffff;
+  min-height: 100vh;
+  box-sizing: border-box;
 }
 
-.app-body aside nav {
+.sidebar-brand {
+  padding: 24px 20px;
+  border-bottom: 1px solid #263244;
+}
+
+.sidebar-brand h2 {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+}
+
+.sidebar-brand span {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: #9ca3af;
+}
+
+.sidebar-nav {
   display: flex;
   flex-direction: column;
+  padding: 16px 10px;
+  gap: 4px;
 }
 
-.app-body aside nav a,
-.app-body aside nav button {
-  padding: 12px 16px;
-  color: white;
-  text-decoration: none;
-  background: transparent;
+.sidebar-nav button {
+  width: 100%;
+  padding: 11px 12px;
   border: none;
-  font: inherit;
+  border-radius: 7px;
+  background: transparent;
+  color: #cbd5e1;
   text-align: left;
+  font: inherit;
+  font-size: 14px;
   cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
 }
 
-.app-body aside nav a:hover,
-.app-body aside nav button:hover {
-  background: #333;
+.sidebar-nav button:hover {
+  background: #1f2937;
+  color: #ffffff;
 }
 
-.app-body aside nav a.active,
-.app-body aside nav button.active {
-  background: #333;
-}
-
-.header {
-  background: #ffffff;
-  border-bottom: 1px solid #ddd;
-  padding: 16px 24px;
-}
-
-.header h1 {
-  margin: 0;
-  font-size: 22px;
+.sidebar-nav button.active {
+  background: #2563eb;
+  color: #ffffff;
 }
 
 .app {

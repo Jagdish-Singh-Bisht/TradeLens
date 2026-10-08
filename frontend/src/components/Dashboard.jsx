@@ -7,144 +7,181 @@ import './Dashboard.css'
 function Dashboard() {
 
     const [analytics, setAnalytics] = useState(null)
-
-    const [strategies, setStrategies] = useState([])
-
+    const [strategies, setStrategies] = useState(null)
     const[behavior, setBehavior] = useState(null)
 
     useEffect(() => {
 
-        // Overall trading analytics
-        fetch('http://localhost:8080/api/broker-accounts/1/analytics',
-            {
-                credentials: 'include'
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Analytics data:', data)
-                setAnalytics(data)
-            })
+        Promise.all([
 
-        //Strategy analytics
-        fetch('http://localhost:8080/api/analytics/strategies/1',
-            {
-                credentials: 'include'
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Strategy data:', data)
-                setStrategies(data)
-            })
+            fetch('http://localhost:8080/api/broker-accounts/1/analytics',
+                {
+                    credentials: 'include'
+                })
+                .then(response => response.json()),
 
-        // Behavior
-        fetch('http://localhost:8080/api/analytics/behavior/1',
-            {
-                credentials: 'include'
+            fetch('http://localhost:8080/api/analytics/strategies/1',
+                {
+                    credentials: 'include'
+                })
+                .then(response => response.json()),
+
+            fetch('http://localhost:8080/api/analytics/behavior/1',
+                {
+                    credentials: 'include'
+                })
+                .then(response => response.json())
+
+        ])
+            .then(([analyticsData, strategiesData, behaviorData]) => {
+                setAnalytics(analyticsData)
+                setStrategies(strategiesData)
+                setBehavior(behaviorData)
             })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Behavior data:', data)
-                setBehavior(data)
-            })
+            .catch(error => console.error('Error loading dashboard: ', error))
 
     }, [])
 
-    if(!analytics) {
-        return <main>Loading...</main>
+    if(!analytics || !strategies || !behavior) {
+
+        return (
+            <main className="dashboard">
+                <div className="dashboard-heading">
+                    <h2>Trading Overview</h2>
+                    <p>Review your overall trading performance.</p>
+                </div>
+
+                <p>Loading dashboard...</p>
+            </main>
+        )
+
     }
 
     const cards = [
-        { title: 'Total P&L', value: analytics.totalProfitLoss },
+        {
+            title: 'Total P&L',
+            value: `Rs.${analytics.totalProfitLoss}`,
+            type: analytics.totalProfitLoss >= 0 ? 'profit' : 'loss'
+        },
         { title: 'Win Rate', value: `${analytics.winRate}%` },
         { title: 'Total Trades', value: analytics.totalTrades },
-        { title: 'Profit Factor', value: analytics.profitFactor }
+        { title: 'Profit Factor', value: analytics.profitFactor || '-' }
     ]
 
     return (
-        <main>
-            <h2>Trading Overview</h2>
+        <main className="dashboard">
 
-            <div className="summary-cards">
-
-                {cards.map((card) => (
-                    <SummaryCard
-                        key={card.title}
-                        title={card.title}
-                        value={card.value}
-                    />
-                ))}
-
+            <div className="dashboard-heading">
+                <h2>Trading Overview</h2>
+                <p>Review your overall trading performance.</p>
             </div>
 
+            <section className="dashboard-section">
+
+                <div className="dashboard-section-header">
+                    <h3>Performance</h3>
+                </div>
+
+                <div className="dashboard-cards">
+
+                    {cards.map((card) => (
+                        <SummaryCard
+                            key={card.title}
+                            title={card.title}
+                            value={card.value}
+                        />
+                    ))}
+
+                </div>
+
+            </section>
+
+
             {/* Strategy Performance*/}
-            <section>
-                <h2>Strategy Performance</h2>
+            <section className="dashboard-section">
+
+                <div className="dashboard-section-header">
+                    <h3>Strategy Performance</h3>
+                </div>
 
                 {strategies.length === 0 ? (
-                    <p>No strategy data available.</p>
-                ) : (
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Strategy</th>
-                                <th>Total Trades</th>
-                                <th>Win Rate</th>
-                                <th>P&L</th>
-                                <th>Profit Factor</th>
-                            </tr>
-                        </thead>
 
-                        <tbody>
-                        {strategies.map((strategy) => (
-                            <tr key={strategy.strategy}>
-                                <td>{strategy.strategy}</td>
-                                <td>{strategy.analytics.totalTrades}</td>
-                                <td>{strategy.analytics.winRate}%</td>
-                                <td>{strategy.analytics.totalProfitLoss}</td>
-                                <td>{strategy.analytics.profitFactor}</td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
+                    <div className="dashboard-empty">
+                        <p>No strategy data available.</p>
+                    </div>
+
+                ) : (
+
+                    <div className="dashboard-table-card">
+
+                        <table className="dashboard-table">
+
+                            <thead>
+                                <tr>
+                                    <th>Strategy</th>
+                                    <th>Total Trades</th>
+                                    <th>Win Rate</th>
+                                    <th>P&L</th>
+                                    <th>Profit Factor</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+
+                                {strategies.map((strategy) => (
+                                    <tr key={strategy.strategy}>
+                                        <td>{strategy.strategy}</td>
+                                        <td>{strategy.analytics.totalTrades}</td>
+                                        <td>{strategy.analytics.winRate}%</td>
+                                        <td>Rs.{strategy.analytics.totalProfitLoss}</td>
+                                        <td>{strategy.analytics.profitFactor}</td>
+                                    </tr>
+                                ))}
+
+                            </tbody>
+
+                        </table>
+
+                    </div>
+
                 )}
 
             </section>
 
-            <section className="behavior-section">
-                <h2>Trading Behavior</h2>
+            <section className="dashboard-section">
 
-                {!behavior ? (
-                    <p>Loading behavior data...</p>
-                ) : (
+                <div className="dashboard-section-header">
+                    <h3>Trading Behavior</h3>
+                </div>
 
-                    <div className="behavior-cards">
-                        <SummaryCard
-                            title="Total Trades"
-                            value={behavior.totalTrades}
-                        />
+                <div className="dashboard-cards">
 
-                        <SummaryCard
-                            title="Early Exits"
-                            value={behavior.earlyExits}
-                        />
+                    <SummaryCard
+                        title="Total Trades"
+                        value={behavior.totalTrades}
+                    />
 
-                        <SummaryCard
-                            title="Late Entries"
-                            value={behavior.lateEntries}
-                        />
+                    <SummaryCard
+                        title="Early Exits"
+                        value={behavior.earlyExits}
+                    />
 
-                        <SummaryCard
-                            title="Stop Loss Hits"
-                            value={behavior.stopLossHits}
-                        />
+                    <SummaryCard
+                        title="Late Entries"
+                        value={behavior.lateEntries}
+                    />
 
-                        <SummaryCard
-                            title="Target Hits"
-                            value={behavior.targetHits}
-                        />
+                    <SummaryCard
+                        title="Stop Loss Hits"
+                        value={behavior.stopLossHits}
+                    />
 
-                    </div>
-                )}
+                    <SummaryCard
+                        title="Target Hits"
+                        value={behavior.targetHits}
+                    />
+
+                </div>
 
             </section>
 
