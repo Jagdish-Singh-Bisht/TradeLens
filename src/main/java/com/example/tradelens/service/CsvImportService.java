@@ -82,6 +82,11 @@ public class CsvImportService {
                         LocalDateTime.parse(record.get("executed_at"))
                 );
 
+                if(executionRepository.findByOrderId(row.orderId()).isPresent()) {
+                    System.out.println("Skipping duplicate order: " + row.orderId());
+                    continue;
+                }
+
                 Instrument instrument = instrumentRepository
                         .findBySymbolAndExchange(
                                 row.symbol(),

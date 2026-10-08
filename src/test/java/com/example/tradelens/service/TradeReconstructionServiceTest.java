@@ -69,12 +69,18 @@ public class TradeReconstructionServiceTest {
 
         brokerAccount = brokerAccountRepository.save(brokerAccount);
 
-        Instrument instrument = new Instrument();
-        instrument.setSymbol("RELIANCE");
-        instrument.setExchange("NSE");
-        instrument.setType(InstrumentType.EQUITY);
+        Instrument instrument = instrumentRepository
+                .findBySymbolAndExchange("RELIANCE", "NSE")
+                .orElseGet(() -> {
+                    Instrument newInstrument = new Instrument();
+                    newInstrument.setSymbol("RELIANCE");
+                    newInstrument.setExchange("NSE");
+                    newInstrument.setType(InstrumentType.EQUITY);
 
-        instrument = instrumentRepository.save(instrument);
+                    return instrumentRepository.save(newInstrument);
+
+                });
+
 
         Execution buyExecution = new Execution();
         buyExecution.setBrokerAccount(brokerAccount);
@@ -160,11 +166,15 @@ public class TradeReconstructionServiceTest {
         account2 = brokerAccountRepository.save(account2);
 
         // Same instrument for both accounts
-        Instrument instrument = new Instrument();
-        instrument.setSymbol("RELIANCE");
-        instrument.setExchange("NSE");
-        instrument.setType(InstrumentType.EQUITY);
-        instrument = instrumentRepository.save(instrument);
+        Instrument instrument = instrumentRepository
+                .findBySymbolAndExchange("RELIANCE", "NSE")
+                .orElseGet(() -> {
+                    Instrument newInstrument = new Instrument();
+                    newInstrument.setSymbol("RELIANCE");
+                    newInstrument.setExchange("NSE");
+                    newInstrument.setType(InstrumentType.EQUITY);
+                    return instrumentRepository.save(newInstrument);
+                });
 
         // Account 1 buys RELIANCE
         Execution account1Buy = new Execution();
@@ -209,11 +219,15 @@ public class TradeReconstructionServiceTest {
         account.setUser(user);
         account = brokerAccountRepository.save(account);
 
-        Instrument reliance = new Instrument();
-        reliance.setSymbol("RELIANCE");
-        reliance.setExchange("NSE");
-        reliance.setType(InstrumentType.EQUITY);
-        reliance = instrumentRepository.save(reliance);
+        Instrument reliance = instrumentRepository
+                .findBySymbolAndExchange("RELIANCE", "NSE")
+                .orElseGet(() -> {
+                    Instrument newInstrument = new Instrument();
+                    newInstrument.setSymbol("RELIANCE");
+                    newInstrument.setExchange("NSE");
+                    newInstrument.setType(InstrumentType.EQUITY);
+                    return instrumentRepository.save(newInstrument);
+                });
 
         Instrument tcs = new Instrument();
         tcs.setSymbol("TCS");
