@@ -11,14 +11,35 @@ import Login from './components/Login'
 import './App.css'
 
 
-import {useState} from "react";
+import {useEffect, useState} from "react";
 
 function App() {
 
-    const [isLoggedIn, setIsLoggedIn] = useState(false)
+    const [isLoggedIn, setIsLoggedIn] = useState(null)
     const [page, setPage] = useState('dashboard')
     const [selectedTradeId, setSelectedTradeId] = useState(null)
 
+    useEffect(() => {
+        fetch('http://localhost:8080/api/auth/me',
+            {
+                credentials: 'include'
+            })
+            .then(response => {
+                if(response.ok) {
+                    setIsLoggedIn(true)
+                } else {
+                    setIsLoggedIn(false)
+                }
+            })
+            .catch(() => {
+                setIsLoggedIn(false)
+            })
+    }, [])
+
+
+    if(!isLoggedIn === null) {
+        return <p>Checking Login...</p>
+    }
 
     if(!isLoggedIn) {
         return <Login onLogin={() => setIsLoggedIn(true)} />

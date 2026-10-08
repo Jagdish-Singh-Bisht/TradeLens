@@ -42,12 +42,12 @@ function Login({ onLogin }) {
 
         console.log('Login URL:', response.url)
 
-        const analyticsResponse = await fetch(
-            'http://localhost:8080/api/broker-accounts/1/analytics',
-            {
-                credentials:'include'
-            }
-        )
+        // const analyticsResponse = await fetch(
+        //     'http://localhost:8080/api/broker-accounts/1/analytics',
+        //     {
+        //         credentials:'include'
+        //     }
+        // )
 
     }
 

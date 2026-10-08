@@ -48,7 +48,8 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/login",
                                 "/error",
-                                "/api/auth/csrf"
+                                "/api/auth/csrf",
+                                "/api/auth/me"
                         )
                         .permitAll()
                         .anyRequest()
