@@ -1,3 +1,7 @@
+import BehaviorChart from './BehaviorChart'
+import StrategyChart from './StrategyChart'
+import TradePnlChart from './TradePnlChart'
+import PnlChart from './PnlChart'
 import { useEffect, useState } from 'react'
 import SummaryCard from './SummaryCard'
 import './Dashboard.css'
@@ -96,13 +100,21 @@ function Dashboard() {
 
             </section>
 
+            <section className="dashboard-section">
+                <PnlChart />
+            </section>
 
-            {/* Strategy Performance*/}
+            <section className="dashboard-section">
+                <TradePnlChart />
+            </section>
+
             <section className="dashboard-section">
 
                 <div className="dashboard-section-header">
                     <h3>Strategy Performance</h3>
                 </div>
+
+
 
                 {strategies.length === 0 ? (
 
@@ -146,6 +158,8 @@ function Dashboard() {
 
                 )}
 
+                <StrategyChart />
+
             </section>
 
             <section className="dashboard-section">
@@ -182,6 +196,8 @@ function Dashboard() {
                     />
 
                 </div>
+
+                <BehaviorChart />
 
             </section>
 

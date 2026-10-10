@@ -1,6 +1,7 @@
 package com.example.tradelens.service;
 
 
+import com.example.tradelens.dto.PnlTrendResponse;
 import com.example.tradelens.entity.Trade;
 import com.example.tradelens.entity.BrokerAccount;
 import com.example.tradelens.dto.TradeAnalyticsResponse;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.math.RoundingMode;
 import java.util.List;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 
 
 
@@ -79,5 +81,41 @@ public class TradeAnalyticsService {
         );
 
     }
+
+    public List<PnlTrendResponse> getPnlTrend(BrokerAccount brokerAccount) {
+
+        List<Trade> trades = tradeRepository
+                .findByBrokerAccount(brokerAccount);
+
+        trades.sort((a, b) -> a.getExitTime().compareTo(b.getExitTime()));
+
+        List<PnlTrendResponse> result = new ArrayList<>();
+
+        BigDecimal cumulativeProfitLoss = BigDecimal.ZERO;
+
+        int tradeNumber = 1;
+
+        for(Trade trade : trades) {
+
+            cumulativeProfitLoss = cumulativeProfitLoss
+                    .add(trade.getProfitLoss());
+
+            result.add(
+                    new PnlTrendResponse(
+                            tradeNumber,
+                            trade.getProfitLoss(),
+                            cumulativeProfitLoss
+                    )
+            );
+
+            tradeNumber++;
+
+        }
+
+        return result;
+
+    }
+
+
 
 }

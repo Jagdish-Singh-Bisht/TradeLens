@@ -1,6 +1,7 @@
 package com.example.tradelens.controller;
 
 
+import com.example.tradelens.dto.PnlTrendResponse;
 import com.example.tradelens.dto.TradeAnalyticsResponse;
 import com.example.tradelens.entity.BrokerAccount;
 import com.example.tradelens.repository.BrokerAccountRepository;
@@ -13,9 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import lombok.RequiredArgsConstructor;
 
-
-
-
+import java.util.List;
 
 
 @RestController
@@ -37,6 +36,19 @@ public class TradeAnalyticsController {
                 ));
 
         return tradeAnalyticsService.getAnalytics(brokerAccount);
+
+    }
+
+    @GetMapping("/{brokerAccountId}/analytics/pnl-trend")
+    public List<PnlTrendResponse> getPnlTrend(@PathVariable Long brokerAccountId) {
+
+        BrokerAccount brokerAccount = brokerAccountRepository
+                .findById(brokerAccountId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Broker account not found"
+                ));
+
+        return tradeAnalyticsService.getPnlTrend(brokerAccount);
 
     }
 
