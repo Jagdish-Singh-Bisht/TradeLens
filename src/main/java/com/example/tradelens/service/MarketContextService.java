@@ -152,19 +152,43 @@ public class MarketContextService {
         return trades.stream()
                 .map(trade -> {
 
-                    MfeResponse mfe = calculateMfe(trade.getId());
-                    MaeResponse mae = calculateMae(trade.getId());
-                    PostExitMovementResponse postExit =
-                            calculatePostExitMovement(trade.getId());
+                    MfeResponse mfe = null;
+                    MaeResponse mae = null;
+                    PostExitMovementResponse postExit = null;
+
+                    try {
+                        mfe = calculateMfe(trade.getId());
+                    } catch (IllegalArgumentException e) {
+                        System.out.println(
+                                "MFE unavailable for trade " + trade.getId()
+                        );
+                    }
+
+                    try {
+                        mae = calculateMae(trade.getId());
+                    } catch (IllegalArgumentException e) {
+                        System.out.println(
+                                "MAE unavailable for trade " + trade.getId()
+                        );
+                    }
+
+                    try {
+                        postExit = calculatePostExitMovement(trade.getId());
+                    } catch (IllegalArgumentException e) {
+                        System.out.println(
+                                "Post-exit movement unavailable for trade "
+                                        + trade.getId()
+                        );
+                    }
 
                     return new MarketContextResponse(
                             trade.getId(),
                             trade.getInstrument().getSymbol(),
                             trade.getEntryPrice(),
                             trade.getExitPrice(),
-                            mfe.mfe(),
-                            mae.mae(),
-                            postExit.postExitMovement()
+                            mfe != null ? mfe.mfe() : null,
+                            mae != null ? mae.mae() : null,
+                            postExit != null ? postExit.postExitMovement() : null
                     );
                 })
                 .toList();

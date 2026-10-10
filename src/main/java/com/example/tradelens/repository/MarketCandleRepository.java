@@ -21,4 +21,8 @@ public interface MarketCandleRepository extends JpaRepository<MarketCandle, Long
             LocalDateTime exitTime
     );
 
+    List<MarketCandle> findByInstrumentOrderByCandleTimeAsc(
+            Instrument instrument
+    );
+
 }
