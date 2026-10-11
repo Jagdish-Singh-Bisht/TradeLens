@@ -27,6 +27,20 @@ public class MarketCandleController {
 
     private final MarketCandleRepository marketCandleRepository;
 
+    @GetMapping("/instruments")
+    public List<Instrument> getAvailableInstruments() {
+
+        return instrumentRepository.findAll()
+                .stream()
+                .filter(instrument ->
+                        !marketCandleRepository
+                                .findByInstrumentOrderByCandleTimeAsc(instrument)
+                                .isEmpty()
+                )
+                .toList();
+
+    }
+
     @GetMapping("/{symbol}/{exchange}")
     public List<MarketCandleCsvRow> getCandles(@PathVariable String symbol,
                                                @PathVariable String exchange) {

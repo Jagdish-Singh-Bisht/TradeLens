@@ -28,3 +28,25 @@
     width: 100%;
     height: 450px;
 }
+
+.ohlc-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    padding: 12px 0;
+    color: #374151;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.ohlc-details span {
+    white-space: nowrap;
+}
+
+.ohlc-high {
+    color: #16a34a;
+}
+
+.ohlc-low {
+    color: #dc2626;
+}
