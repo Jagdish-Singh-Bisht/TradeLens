@@ -1,5 +1,5 @@
 import './TradeDetails.css'
-
+import CandlestickChart from './CandlestickChart'
 import { useEffect, useState } from 'react'
 
 
@@ -143,9 +143,20 @@ function TradeDetails({ tradeId }) {
         return <main>Loading Trade...</main>
     }
 
+    const formatAmount = (value) => {
+        if (value == null || value === '') {
+            return '—'
+        }
+
+        return `₹${Number(value).toLocaleString('en-IN', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })}`
+    }
+
     return (
 
-        <main>
+        <main className="trade-details-page">
             <h2>Trade Details</h2>
 
             <section className="trade-summary">
@@ -165,17 +176,17 @@ function TradeDetails({ tradeId }) {
 
                     <div className="trade-stat">
                         <span>Entry Price</span>
-                        <strong>Rs.{trade.entryPrice}</strong>
+                        <strong>₹{trade.entryPrice}</strong>
                     </div>
 
                     <div className="trade-stat">
                         <span>Exit Price</span>
-                        <strong>Rs.{trade.exitPrice}</strong>
+                        <strong>₹{trade.exitPrice}</strong>
                     </div>
 
                     <div className="trade-stat">
                         <span>P&L</span>
-                        <strong>Rs.{trade.profitLoss}</strong>
+                        <strong>₹{trade.profitLoss}</strong>
                     </div>
 
                 </div>
@@ -219,17 +230,17 @@ function TradeDetails({ tradeId }) {
 
                             <div className="decision-item">
                                 <span>Planned Entry</span>
-                                <strong>Rs.{trade.decision.plannedEntry}</strong>
+                                <strong>₹{trade.decision.plannedEntry}</strong>
                             </div>
 
                             <div className="decision-item">
                                 <span>Target</span>
-                                <strong>Rs.{trade.decision.target}</strong>
+                                <strong>₹{trade.decision.target}</strong>
                             </div>
 
                             <div className="decision-item">
                                 <span>Stop Loss</span>
-                                <strong>Rs.{trade.decision.stopLoss}</strong>
+                                <strong>₹{trade.decision.stopLoss}</strong>
                             </div>
 
                         </div>
@@ -251,7 +262,7 @@ function TradeDetails({ tradeId }) {
                     </div>
                 ) : (
 
-                    <form onSubmit={handleSubmit}>
+                    <form className="trade-decision-form" onSubmit={handleSubmit}>
 
                         <div>
                             <label>Strategy</label>
@@ -334,11 +345,11 @@ function TradeDetails({ tradeId }) {
                 )}
             </section>
 
-            <section className="analysis-section">
-                <div className="section-header">
-                    <h3>Decision vs Actual</h3>
-                    <span>Plan vs execution</span>
-                </div>
+            <details className="analysis-section collapsible-section">
+                <summary className="collapsible-heading">
+                    <span>Decision vs Actual</span>
+                    <span className="collapsible-hint">Plan vs execution</span>
+                </summary>
 
                 {!decisionAnalysis ? (
                     <div className="loading-card">
@@ -353,17 +364,17 @@ function TradeDetails({ tradeId }) {
                             <div className="analysis-grid">
                                 <div>
                                     <span>Planned Entry</span>
-                                    <strong>Rs.{decisionAnalysis.plannedEntry}</strong>
+                                    <strong>{formatAmount(decisionAnalysis.plannedEntry)}</strong>
                                 </div>
 
                                 <div>
                                     <span>Actual Entry</span>
-                                    <strong>Rs.{decisionAnalysis.actualEntry}</strong>
+                                    <strong>{formatAmount(decisionAnalysis.actualEntry)}</strong>
                                 </div>
 
                                 <div>
                                     <span>Deviation</span>
-                                    <strong>Rs.{decisionAnalysis.entryDeviation}</strong>
+                                    <strong>{formatAmount(decisionAnalysis.entryDeviation)}</strong>
                                 </div>
 
                             </div>
@@ -376,17 +387,17 @@ function TradeDetails({ tradeId }) {
                             <div className="analysis-grid">
                                 <div>
                                     <span>Target</span>
-                                    <strong>Rs.{decisionAnalysis.target}</strong>
+                                    <strong>{formatAmount(decisionAnalysis.target)}</strong>
                                 </div>
 
                                 <div>
                                     <span>Actual Exit</span>
-                                    <strong>Rs.{decisionAnalysis.actualExit}</strong>
+                                    <strong>{formatAmount(decisionAnalysis.actualExit)}</strong>
                                 </div>
 
                                 <div>
                                     <span>Deviation</span>
-                                    <strong>Rs.{decisionAnalysis.exitDeviation}</strong>
+                                    <strong>{formatAmount(decisionAnalysis.exitDeviation)}</strong>
                                 </div>
 
                             </div>
@@ -399,30 +410,57 @@ function TradeDetails({ tradeId }) {
                             <div className="analysis-grid">
                                 <div>
                                     <span>Stop Loss</span>
-                                    <strong>Rs.{decisionAnalysis.stopLoss}</strong>
+                                    <strong>{formatAmount(decisionAnalysis.stopLoss)}</strong>
                                 </div>
 
                                 <div>
                                     <span>Planned Risk</span>
-                                    <strong>Rs.{decisionAnalysis.plannedRisk}</strong>
+                                    <strong>{formatAmount(decisionAnalysis.plannedRisk)}</strong>
                                 </div>
 
                                 <div>
-                                    <span>Actual P&L</span>
-                                    <strong>Rs.{decisionAnalysis.actualProfitLoss}</strong>
+                                    <span>Actual P&amp;L</span>
+                                    <strong
+                                        className={
+                                            Number(decisionAnalysis.actualProfitLoss) > 0
+                                                ? 'analysis-profit'
+                                                : Number(decisionAnalysis.actualProfitLoss) < 0
+                                                    ? 'analysis-loss'
+                                                    : ''
+                                        }
+                                    >
+                                        {formatAmount(decisionAnalysis.actualProfitLoss)}
+                                    </strong>
                                 </div>
                             </div>
 
                             <div className="analysis-status">
                                 <span>
                                     Target Achieved:
-                                    <strong>{decisionAnalysis.targetAchieved ? ' Yes' : ' No'}</strong>
+                                    <strong
+                                        className={
+                                            decisionAnalysis.targetAchieved
+                                                ? 'analysis-profit'
+                                                : 'analysis-neutral'
+                                        }
+                                    >
+                                        {decisionAnalysis.targetAchieved ? ' Yes' : ' No'}
+                                    </strong>
                                 </span>
 
                                 <span>
                                     Stop Loss Hit:
-                                    <strong>{decisionAnalysis.stopLossHit ? ' Yes' : ' No'}</strong>
+                                    <strong
+                                        className={
+                                            decisionAnalysis.stopLossHit
+                                                ? 'analysis-loss'
+                                                : 'analysis-neutral'
+                                        }
+                                    >
+                                        {decisionAnalysis.stopLossHit ? ' Yes' : ' No'}
+                                    </strong>
                                 </span>
+
                             </div>
 
                         </div>
@@ -431,13 +469,13 @@ function TradeDetails({ tradeId }) {
 
                 )}
 
-            </section>
+            </details>
 
-            <section className="market-section">
-                <div className="section-header">
-                    <h3>Market Context</h3>
-                    <span>Price movement during and after trade</span>
-                </div>
+            <details className="market-section collapsible-section">
+                <summary className="collapsible-heading">
+                    <span>Market Context</span>
+                    <span className="collapsible-hint">Price movement during and after trade</span>
+                </summary>
 
                 {!mfe || !mae || !postExitMovement ? (
                     <div className="loading-card">
@@ -447,6 +485,20 @@ function TradeDetails({ tradeId }) {
 
                     <div className="market-card">
 
+                        <div className="market-chart-group">
+                            <h4>Historical Price Movement</h4>
+
+                            <CandlestickChart
+                                symbol={trade.instrument?.symbol}
+                                exchange={trade.instrument?.exchange}
+                                entryTime={trade.entryTime}
+                                exitTime={trade.exitTime}
+                                entryPrice={trade.entryPrice}
+                                exitPrice={trade.exitPrice}
+                            />
+
+                        </div>
+
                         <div className="market-group">
                             <h4>During Trade</h4>
 
@@ -454,25 +506,25 @@ function TradeDetails({ tradeId }) {
 
                                 <div>
                                     <span>MFE</span>
-                                    <strong>Rs.{mfe.mfe}</strong>
+                                    <strong>₹{mfe.mfe}</strong>
                                     <small>Maximum favorable movement</small>
                                 </div>
 
                                 <div>
                                     <span>Highest Price</span>
-                                    <strong>Rs.{mfe.highestPrice}</strong>
+                                    <strong>₹{mfe.highestPrice}</strong>
                                     <small>Highest price during trade</small>
                                 </div>
 
                                 <div>
                                     <span>MAE</span>
-                                    <strong>Rs.{mae.mae}</strong>
+                                    <strong>₹{mae.mae}</strong>
                                     <small>Maximum adverse movement</small>
                                 </div>
 
                                 <div>
                                     <span>Lowest Price</span>
-                                    <strong>Rs.{mae.lowestPrice}</strong>
+                                    <strong>₹{mae.lowestPrice}</strong>
                                     <small>Lowest price during trade</small>
                                 </div>
 
@@ -487,13 +539,13 @@ function TradeDetails({ tradeId }) {
 
                                 <div>
                                     <span>Post-exit Movement</span>
-                                    <strong>Rs.{postExitMovement.postExitMovement}</strong>
+                                    <strong>₹{postExitMovement.postExitMovement}</strong>
                                     <small>Additional favorable movement</small>
                                 </div>
 
                                 <div>
                                     <span>Highest Price After Exit</span>
-                                    <strong>Rs.{postExitMovement.highestPriceAfterExit}</strong>
+                                    <strong>₹{postExitMovement.highestPriceAfterExit}</strong>
                                     <small>Highest price after exit</small>
                                 </div>
 
@@ -505,7 +557,7 @@ function TradeDetails({ tradeId }) {
                 )}
 
 
-            </section>
+            </details>
 
         </main>
     )

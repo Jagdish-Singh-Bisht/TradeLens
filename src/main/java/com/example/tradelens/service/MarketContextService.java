@@ -15,8 +15,10 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.math.BigDecimal;
+import java.time.LocalTime;
 
 
 @Service
@@ -110,22 +112,27 @@ public class MarketContextService {
 
     }
 
+
     public PostExitMovementResponse calculatePostExitMovement(Long tradeId) {
 
         Trade trade = tradeRepository.findById(tradeId)
                 .orElseThrow(() ->
                         new IllegalArgumentException("Trade not found"));
 
+        LocalDateTime endOfTradingDay =
+                trade.getExitTime().toLocalDate().atTime(LocalTime.MAX);
+
         List<MarketCandle> candles =
                 marketCandleRepository
-                        .findByInstrumentAndCandleTimeGreaterThanOrderByCandleTimeAsc(
+                        .findByInstrumentAndCandleTimeGreaterThanAndCandleTimeLessThanEqualOrderByCandleTimeAsc(
                                 trade.getInstrument(),
-                                trade.getExitTime()
+                                trade.getExitTime(),
+                                endOfTradingDay
                         );
 
         if (candles.isEmpty()) {
             throw new IllegalArgumentException(
-                    "No market candles found after trade exit"
+                    "No market candles found after trade exit on the same day"
             );
         }
 
@@ -142,8 +149,8 @@ public class MarketContextService {
                 highestPriceAfterExit,
                 postExitMovement
         );
-
     }
+
 
     public List<MarketContextResponse> getMarketContext(BrokerAccount brokerAccount) {
 

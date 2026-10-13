@@ -1,9 +1,17 @@
 import { useEffect, useRef, useState } from 'react'
-import { createChart, CandlestickSeries } from 'lightweight-charts'
+import { createChart, CandlestickSeries, createSeriesMarkers } from 'lightweight-charts'
 import './CandlestickChart.css'
 
 
-function CandlestickChart() {
+
+function CandlestickChart({
+                              symbol: tradeSymbol,
+                              exchange: tradeExchange,
+                              entryTime,
+                              exitTime,
+                              entryPrice,
+                              exitPrice
+                          }) {
 
     const chartContainerRef = useRef(null)
 
@@ -15,6 +23,20 @@ function CandlestickChart() {
 
     const [hoveredCandle, setHoveredCandle] = useState(null)
 
+    const chartSymbol = tradeSymbol || selectedInstrument?.symbol;
+    const chartExchange = tradeExchange || selectedInstrument?.exchange;
+
+    const [tradeMarkerTooltip, setTradeMarkerTooltip] = useState(null);
+
+    const tradeMarkerTimes = useRef({
+        entry: null,
+        exit: null
+    });
+
+    const [tooltipPosition, setTooltipPosition] = useState({
+        x: 12,
+        y: 12
+    });
 
     useEffect(() => {
         fetch('http://localhost:8080/api/market-candles/instruments', {
@@ -40,9 +62,7 @@ function CandlestickChart() {
 
     useEffect(() => {
 
-        if(!selectedInstrument) {
-            return
-        }
+        if (!chartSymbol || !chartExchange) return;
 
         const chart = createChart(chartContainerRef.current, {
 
@@ -79,17 +99,18 @@ function CandlestickChart() {
         })
 
         const handleCrosshairMove = (param) => {
-
-            if(!param.time) {
-                setHoveredCandle(null)
-                return
+            if (param.time == null) {
+                setHoveredCandle(null);
+                setTradeMarkerTooltip(null);
+                return;
             }
 
-            const candle = param.seriesData.get(candlestickSeries)
+            const candle = param.seriesData.get(candlestickSeries);
 
-            if(!candle){
-                setHoveredCandle(null)
-                return
+            if (!candle) {
+                setHoveredCandle(null);
+                setTradeMarkerTooltip(null);
+                return;
             }
 
             setHoveredCandle({
@@ -98,13 +119,40 @@ function CandlestickChart() {
                 high: candle.high,
                 low: candle.low,
                 close: candle.close
-            })
+            });
 
-        }
+            const hoveredTime =
+                typeof param.time === 'number' ? param.time : null;
+
+            if (param.point) {
+                setTooltipPosition({
+                    x: Math.max(8, Math.min(param.point.x + 14, chartContainerRef.current.clientWidth - 230)),
+                    y: Math.max(8, param.point.y - 45)
+                });
+            }
+
+            const { entry, exit } = tradeMarkerTimes.current;
+
+            if (hoveredTime === entry && entry !== null) {
+                setTradeMarkerTooltip({
+                    action: 'BUY',
+                    price: entryPrice,
+                    time: entryTime
+                });
+            } else if (hoveredTime === exit && exit !== null) {
+                setTradeMarkerTooltip({
+                    action: 'SELL',
+                    price: exitPrice,
+                    time: exitTime
+                });
+            } else {
+                setTradeMarkerTooltip(null);
+            }
+        };
 
         chart.subscribeCrosshairMove(handleCrosshairMove)
 
-        fetch(`http://localhost:8080/api/market-candles/${selectedInstrument.symbol}/${selectedInstrument.exchange}`,
+        fetch(`http://localhost:8080/api/market-candles/${chartSymbol}/${chartExchange}`,
             {
                 credentials: 'include'
             })
@@ -114,34 +162,147 @@ function CandlestickChart() {
                 }
                 return response.json()
             })
-            .then(candles => {
 
-                if (candles.length === 0) {
-                    setNoData(true)
-                    return
+            .then(candles => {
+                // Clear details from the previously selected trade.
+                setHoveredCandle(null);
+                setTradeMarkerTooltip(null);
+                tradeMarkerTimes.current = { entry: null, exit: null };
+
+                if (!candles.length) {
+                    setNoData(true);
+                    return;
                 }
 
-                setNoData(false)
+                // Convert the trade's date and time into Unix seconds.
+                const toChartTime = (dateTime) => {
+                    if (!dateTime) return null;
 
-                const chartData = candles.map(candle => {
-                    const [date, time] = candle.candleTime.split('T')
-                    const [year, month, day] = date.split('-').map(Number)
-                    const [hour, minute, second = 0] = time.split(':').map(Number)
+                    const [datePart, timePart] = dateTime.split('T');
+                    if (!timePart) return null;
 
-                    return {
-                        time: Math.floor(
-                            Date.UTC(year, month - 1, day, hour, minute, second) / 1000
-                        ),
+                    const [year, month, day] = datePart.split('-').map(Number);
+                    const [hour, minute, second = 0] = timePart.split(':').map(Number);
+
+                    return Math.floor(
+                        Date.UTC(year, month - 1, day, hour, minute, second) / 1000
+                    );
+                };
+
+                const entryTimestamp = toChartTime(entryTime);
+                const exitTimestamp = toChartTime(exitTime);
+
+                // Show only candles on the selected trade's date.
+                // Include 30 minutes before entry and 15 minutes after exit.
+                const tradeDate = entryTime?.split('T')[0];
+
+                const rangeStart = entryTimestamp == null
+                    ? null
+                    : entryTimestamp - 30 * 60;
+
+                // const rangeEnd = exitTimestamp == null
+                //     ? null
+                //     : exitTimestamp + 15 * 60;
+
+                const rangeEnd = exitTimestamp == null
+                    ? rangeStart + 6 * 60 * 60
+                    : toChartTime(
+                        `${exitTime.slice(0, 10)}T23:59:00`
+                    );
+
+                const relevantCandles = tradeDate
+                    ? candles.filter(candle => {
+                        const timestamp = toChartTime(candle.candleTime);
+
+                        return (
+                            candle.candleTime.startsWith(tradeDate) &&
+                            (rangeStart == null || timestamp >= rangeStart) &&
+                            (rangeEnd == null || timestamp <= rangeEnd)
+                        );
+                    })
+                    : candles;
+
+                if (relevantCandles.length === 0) {
+                    setNoData(true);
+                    return;
+                }
+
+                setNoData(false);
+
+                const chartData = relevantCandles
+                    .map(candle => ({
+                        time: toChartTime(candle.candleTime),
                         open: Number(candle.open),
                         high: Number(candle.high),
                         low: Number(candle.low),
                         close: Number(candle.close)
-                    }
-                })
+                    }))
+                    .sort((a, b) => a.time - b.time);
 
-                candlestickSeries.setData(chartData)
-                chart.timeScale().fitContent()
+                candlestickSeries.setData(chartData);
+
+                // A marker is allowed only when a candle exists at
+                // the exact trade timestamp. Never use a different date's candle.
+                const candleTimes = new Set(chartData.map(candle => candle.time));
+
+                const markers = [];
+
+                const nearestCandle = (timestamp) => {
+                    if(timestamp == null || chartData.length === 0) return null;
+
+                    const nearest = chartData.reduce((best, candle) =>
+                            Math.abs(candle.time - timestamp) <
+                            Math.abs(best.time - timestamp)
+                                ? candle
+                                : best
+                    );
+
+                    return Math.abs(nearest.time - timestamp) <= 120
+                        ? nearest
+                        : null;
+
+                };
+
+                const entryCandle = nearestCandle(entryTimestamp);
+                const exitCandle = nearestCandle(exitTimestamp);
+
+                if (entryCandle) {
+                    markers.push({
+                        time: entryCandle.time,
+                        position: 'atPriceMiddle',
+                        price: Number(entryPrice),
+                        color: '#006400', // #16a34a
+                        shape: 'arrowUp',
+                        // text: '▲',
+                        size: 0.1
+                    });
+                }
+
+                if (exitCandle) {
+                    markers.push({
+                        time: exitCandle.time,
+                        position: 'atPriceMiddle',
+                        price: Number(exitPrice),
+                        color: '#dc2626',
+                        shape: 'arrowDown',
+                        // text: '▼',
+                        size: 0.1
+                    });
+                }
+
+
+                markers.sort((a, b) => a.time - b.time);
+
+                createSeriesMarkers(candlestickSeries, markers);
+
+                tradeMarkerTimes.current = {
+                    entry: entryCandle?.time ?? null,
+                    exit: exitCandle?.time ?? null
+                };
+
+                chart.timeScale().fitContent();
             })
+
             .catch(error => console.error('Candlestick Chart error: ', error))
 
         const handleResize = () => {
@@ -158,56 +319,72 @@ function CandlestickChart() {
             chart.remove()
         }
 
-    }, [selectedInstrument])
+    }, [
+        chartSymbol,
+        chartExchange,
+        entryTime,
+        exitTime,
+        entryPrice,
+        exitPrice
+    ])
 
     return (
+
         <div className="candlestick-card">
             <div className="candlestick-heading">
                 <h3>
-                    { selectedInstrument
-                        ? `${selectedInstrument.symbol} . ${selectedInstrument.exchange}`
-                        : 'Loading instruments...'
-                    }
+                    {chartSymbol && chartExchange
+                        ? `${chartSymbol} · ${chartExchange}`
+                        : 'Loading chart...'}
                 </h3>
 
                 <p>Historical price movement</p>
             </div>
 
-            <select
-                value= {
-                    selectedInstrument
-                        ? `${selectedInstrument.symbol}|${selectedInstrument.exchange}`
-                        : ''
-                }
-
-                onChange = { event => {
-                    const [symbol, exchange] = event.target.value.split('|')
-
-                    const instrument = instruments.find(
-                        item =>
-                            item.symbol === symbol &&
-                            item.exchange === exchange
-                    )
-
-                    if(instrument) {
-                        setSelectedInstrument(instrument)
+            {!tradeSymbol && !tradeExchange && (
+                <select
+                    value={
+                        selectedInstrument
+                            ? `${selectedInstrument.symbol}|${selectedInstrument.exchange}`
+                            : ''
                     }
+                    onChange={(event) => {
+                        const instrument = instruments.find(
+                            (item) =>
+                                `${item.symbol}|${item.exchange}` === event.target.value
+                        );
 
-                }}
-                disabled = {instruments.length === 0}
-            >
-                {instruments.map(instrument => (
-                    <option
-                        key={ `${instrument.symbol}|${instrument.exchange}` }
-                        value={ `${instrument.symbol}|${instrument.exchange}` }
-                    >
-                        {instrument.symbol} . {instrument.exchange}
-                    </option>
-                ))}
-
-            </select>
+                        setSelectedInstrument(instrument || null);
+                    }}
+                >
+                    {instruments.map((instrument) => (
+                        <option
+                            key={`${instrument.symbol}|${instrument.exchange}`}
+                            value={`${instrument.symbol}|${instrument.exchange}`}
+                        >
+                            {instrument.symbol} · {instrument.exchange}
+                        </option>
+                    ))}
+                </select>
+            )}
 
             <div className="candlestick-chart-container">
+
+                {tradeMarkerTooltip && (
+                    <div
+                        className={`trade-marker-tooltip ${
+                            tradeMarkerTooltip.action === 'BUY' ? 'buy-tooltip' : 'sell-tooltip'
+                        }`}
+                        style={{
+                            left: `${tooltipPosition.x}px`,
+                            top: `${tooltipPosition.y}px`
+                        }}
+                    >
+                        <strong>{tradeMarkerTooltip.action}</strong>
+                        <span>₹{Number(tradeMarkerTooltip.price).toFixed(2)}</span>
+                        <span>{tradeMarkerTooltip.time?.replace('T', ' ')}</span>
+                    </div>
+                )}
 
                 {hoveredCandle && (
                     <div className="ohlc-details">
@@ -243,7 +420,8 @@ function CandlestickChart() {
 
                 {noData && (
                     <p className="no-candle-data">
-                        No historical candle data available for this instrument.
+                        No historical candle data available for this trade's date
+                        and time range. Import candle data covering the trade period.
                     </p>
                 )}
 

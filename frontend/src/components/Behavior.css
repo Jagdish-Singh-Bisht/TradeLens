@@ -39,3 +39,25 @@
     grid-template-columns: repeat(3, 1fr);
     gap: 16px;
 }
+
+
+.behavior-chart-container {
+    margin-top: 24px;
+    padding: 24px;
+    min-width: 0;
+    box-sizing: border-box;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+}
+
+.behavior-chart-container h3 {
+    margin: 0 0 8px;
+    color: #111827;
+}
+
+.behavior-chart-container p {
+    margin: 0 0 16px;
+    color: #6b7280;
+    font-size: 14px;
+}

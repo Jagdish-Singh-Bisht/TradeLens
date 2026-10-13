@@ -76,7 +76,12 @@ public class MarketCandleCsvImportService {
                                 )
                         );
 
-                MarketCandle candle = new MarketCandle();
+                MarketCandle candle = marketCandleRepository
+                        .findByInstrumentAndCandleTime(
+                                instrument,
+                                row.candleTime()
+                        )
+                        .orElseGet(MarketCandle::new);
 
                 candle.setInstrument(instrument);
                 candle.setCandleTime(row.candleTime());

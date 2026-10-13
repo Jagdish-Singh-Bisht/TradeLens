@@ -1,0 +1,185 @@
+
+.trades-page {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    color: #111827;
+}
+
+.trades-heading h2 {
+    margin: 0;
+    font-size: 26px;
+}
+
+.trades-heading p,
+.trades-import > p,
+.trades-history-heading p {
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.trades-import,
+.trades-history {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 24px;
+}
+
+.trades-import h3,
+.trades-history h3 {
+    margin-top: 0;
+    margin-bottom: 8px;
+}
+
+.trades-import-controls,
+.trades-filters,
+.trades-history-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.trades-import-controls {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    margin-top: 16px;
+}
+
+.trades-import input[type="file"]::file-selector-button {
+    background-color: #16a34a;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-right: 10px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.trades-import input[type="file"]::file-selector-button:hover {
+    background-color: #15803d;
+}
+.trades-filters {
+    justify-content: flex-start;
+    margin: 20px 0;
+}
+
+.trades-filters input,
+.trades-filters select {
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background: #ffffff;
+    color: #111827;
+    font: inherit;
+}
+
+.trades-filters input::placeholder {
+    color: #6b7280;
+    opacity: 1;
+}
+
+.trades-filters select option {
+    background-color: #ffffff;
+    color: #111827;
+}
+
+.trades-filters select:focus,
+.trades-filters input:focus {
+    outline: 2px solid #93c5fd;
+    outline-offset: 1px;
+}
+
+.trades-filters input {
+    width: 260px;
+    max-width: 100%;
+}
+
+.trades-page button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: #ffffff;
+    font: inherit;
+    cursor: pointer;
+}
+
+.trades-page button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.trades-table-wrapper {
+    overflow-x: auto;
+    width: 100%;
+}
+
+.trades-table {
+    width: 100%;
+    border-collapse: collapse;
+    white-space: nowrap;
+}
+
+.trades-table th,
+.trades-table td {
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.trades-table th {
+    background: #f9fafb;
+    color: #6b7280;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.trades-table tbody tr {
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.trades-table tbody tr:hover,
+.trades-table tbody tr:focus {
+    background: #eff6ff;
+    outline: none;
+}
+
+.profit-value {
+    color: #15803d;
+    font-weight: 600;
+}
+
+.loss-value {
+    color: #dc2626;
+    font-weight: 600;
+}
+
+.trades-success {
+    color: #15803d;
+}
+
+.trades-error {
+    color: #dc2626;
+}
+
+@media (max-width: 700px) {
+    .trades-import,
+    .trades-history {
+        padding: 16px;
+    }
+
+    .trades-history-heading,
+    .trades-filters {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .trades-filters input {
+        width: auto;
+    }
+}
