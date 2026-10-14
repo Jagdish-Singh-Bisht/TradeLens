@@ -13,6 +13,97 @@ import './App.css'
 
 import {useEffect, useState} from "react";
 
+import {
+    BrowserRouter,
+    Routes,
+    Route,
+    Navigate,
+    useNavigate,
+    useLocation,
+    useParams,
+} from 'react-router-dom'
+
+function TradeDetailsPage() {
+    const {tradeId} = useParams()
+
+    return <TradeDetails tradeId={tradeId} />
+}
+
+function AppLayout() {
+
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    const currentPage = location.pathname.startsWith('/trades/')
+        ? 'trade-details'
+        : location.pathname.slice(1) || 'dashboard'
+
+    return (
+
+        <div className="app">
+            <div className="app-body">
+
+                <Sidebar
+                    onNavigate={(nextPage) => navigate(`/${nextPage}`)}
+                    currentPage={currentPage}
+                />
+
+                <Routes>
+                    <Route
+                        path="/"
+                        element={<Navigate to="/dashboard" replace />}
+                    />
+
+                    <Route
+                        path="/dashboard"
+                        element={<Dashboard />}
+                    />
+
+                    <Route
+                        path="/trades"
+                        element={
+                            <Trades
+                                onSelectTrade={(tradeId) => {
+                                    navigate(`/trades/${tradeId}`)
+                                }}
+                            />
+                        }
+                    />
+
+                    <Route
+                        path="/trades/:tradeId"
+                        element={<TradeDetailsPage/>}
+                    />
+
+
+                    <Route
+                        path="/analytics"
+                        element={<Analytics />}
+                    />
+
+                    <Route
+                        path="/strategies"
+                        element={<Strategies />}
+                    />
+
+                    <Route
+                        path="/market-context"
+                        element={<MarketContext />}
+                    />
+
+                    <Route
+                        path="*"
+                        element={<Navigate to="/dashboard" replace />}
+                    />
+
+                </Routes>
+
+            </div>
+        </div>
+    )
+
+}
+
 function App() {
 
     const [isLoggedIn, setIsLoggedIn] = useState(null)
@@ -25,11 +116,7 @@ function App() {
                 credentials: 'include'
             })
             .then(response => {
-                if(response.ok) {
-                    setIsLoggedIn(true)
-                } else {
-                    setIsLoggedIn(false)
-                }
+                setIsLoggedIn(response.ok)
             })
             .catch(() => {
                 setIsLoggedIn(false)
@@ -46,42 +133,9 @@ function App() {
     }
 
   return (
-      <div className="app">
-
-          <div className="app-body">
-
-              <Sidebar
-                  onNavigate={setPage}
-                  currentPage={page}
-              />
-
-              { page === 'dashboard' && <Dashboard/> }
-
-              { page === 'trades' && (
-                  <Trades
-                      onSelectTrade={(tradeId) => {
-                        setSelectedTradeId(tradeId)
-                        setPage('trade-details')
-                      }}
-                  />
-              )}
-
-              {page === 'trade-details' && (
-                  <TradeDetails tradeId={selectedTradeId} />
-              )}
-
-              { page === 'analytics' && <Analytics /> }
-
-              {page === 'strategies' && <Strategies />}
-
-              {page === 'behavior' && <Behavior />}
-
-              {page === 'market-context' && <MarketContext />}
-
-          </div>
-
-      </div>
-
+      <BrowserRouter>
+          <AppLayout />
+      </BrowserRouter>
   )
 
 }
