@@ -17,22 +17,56 @@ function TradePnlChart() {
 
     const [data, setData] = useState([])
 
+
     useEffect(() => {
-        fetch('http://localhost:8080/api/broker-accounts/1/analytics/pnl-trend',
-            {
-                credentials: 'include'
-            })
-            .then(response => {
-                if(!response.ok) {
-                    throw new Error('Failed to fetch P&L data')
+        async function loadTradePnl() {
+            try {
+                const accountsResponse = await fetch(
+                    'http://localhost:8080/api/broker-accounts',
+                    { credentials: 'include' }
+                );
+
+                if (!accountsResponse.ok) {
+                    throw new Error(
+                        `Failed to load accounts: HTTP ${accountsResponse.status}`
+                    );
                 }
 
-                return response.json()
-            })
-            .then(result => setData(result))
-            .catch(error => console.error(error))
+                const accounts = await accountsResponse.json();
 
-    }, [])
+                if (!Array.isArray(accounts) || accounts.length === 0) {
+                    setData([]);
+                    return;
+                }
+
+                const brokerAccountId = accounts[0].id;
+
+                const response = await fetch(
+                    `http://localhost:8080/api/broker-accounts/${brokerAccountId}/analytics/pnl-trend`,
+                    { credentials: 'include' }
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        `Failed to load trade P&L: HTTP ${response.status}`
+                    );
+                }
+
+                const result = await response.json();
+
+                if (!Array.isArray(result)) {
+                    throw new Error('Expected P&L data to be a list.');
+                }
+
+                setData(result);
+            } catch (error) {
+                console.error('Error loading trade P&L:', error);
+            }
+        }
+
+        loadTradePnl();
+    }, []);
+
 
     return (
 

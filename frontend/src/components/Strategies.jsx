@@ -15,22 +15,68 @@ function Strategies() {
     const [strategies, setStrategies] = useState(null)
     const [error, setError] = useState('')
 
+
     useEffect(() => {
-        fetch('http://localhost:8080/api/analytics/strategies/1', {
-            credentials: 'include'
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load strategy analytics.')
+        async function loadStrategies() {
+            try {
+                setError('');
+
+                // 1. Fetch the logged-in user's broker accounts
+                const accountsResponse = await fetch(
+                    'http://localhost:8080/api/broker-accounts',
+                    { credentials: 'include' }
+                );
+
+                if (!accountsResponse.ok) {
+                    throw new Error(
+                        `Failed to load broker accounts: HTTP ${accountsResponse.status}`
+                    );
                 }
-                return response.json()
-            })
-            .then(data => setStrategies(data))
-            .catch(error => {
-                console.error('Error loading strategies:', error)
-                setError(error.message)
-            })
-    }, [])
+
+                const accounts = await accountsResponse.json();
+
+                if (!Array.isArray(accounts)) {
+                    throw new Error('Invalid broker accounts response.');
+                }
+
+                if (accounts.length === 0) {
+                    setStrategies([]);
+                    setError('No broker account found. Create one to view strategy analytics.');
+                    return;
+                }
+
+                // 2. Use the actual account ID
+                const brokerAccountId = accounts[0].id;
+
+                const response = await fetch(
+                    `http://localhost:8080/api/analytics/strategies/${brokerAccountId}`,
+                    { credentials: 'include' }
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        `Failed to load strategy analytics: HTTP ${response.status}`
+                    );
+                }
+
+                const data = await response.json();
+
+                if (!Array.isArray(data)) {
+                    throw new Error('Invalid strategy analytics response.');
+                }
+
+                setStrategies(data);
+
+            } catch (error) {
+                console.error('Error loading strategies:', error);
+                setError(error.message);
+            }
+        }
+
+        loadStrategies();
+
+    }, []);
+
 
     if (error) {
         return (

@@ -16,29 +16,59 @@ function Trades({ onSelectTrade }) {
     const [importing, setImporting] = useState(false)
     const [message, setMessage] = useState('')
     const [error, setError] = useState('')
+    const [brokerAccountId, setBrokerAccountId] = useState(null);
 
     const loadTrades = async () => {
         setLoading(true)
         setError('')
 
         try {
-            const response = await fetch(
-                'http://localhost:8080/api/trades/broker-account/1',
+            const accountsResponse = await fetch(
+                'http://localhost:8080/api/broker-accounts',
                 { credentials: 'include' }
-            )
+            );
 
-            if (!response.ok) {
-                throw new Error('Failed to load trades.')
+            if (!accountsResponse.ok) {
+                throw new Error(
+                    `Failed to load broker accounts: HTTP ${accountsResponse.status}`
+                );
             }
 
-            const data = await response.json()
+            const accounts = await accountsResponse.json()
 
-            if (!Array.isArray(data)) {
-                throw new Error('Unexpected response from server.')
+            if (!Array.isArray(accounts) || accounts.length === 0) {
+                setBrokerAccountId(null);
+                setTrades([]);
+                setError('No broker account found. Create an account first.');
+                return;
             }
 
-            setTrades(data)
+            const accountId = accounts[0].id;
+            setBrokerAccountId(accountId);
+
+            const tradesResponse = await fetch(
+                `http://localhost:8080/api/trades/broker-account/${accountId}`,
+                { credentials: 'include' }
+            );
+
+            if (!tradesResponse.ok) {
+                const message = await tradesResponse.text();
+
+                throw new Error(
+                    message || `Failed to load trades: HTTP ${tradesResponse.status}`
+                );
+            }
+
+            const tradesData = await tradesResponse.json();
+
+            if (!Array.isArray(tradesData)) {
+                throw new Error('Unexpected response from server.');
+            }
+
+            setTrades(tradesData);
+
         } catch (err) {
+            console.error('Error loading trades: ', err);
             setError(err.message || 'Unable to load trades.')
         } finally {
             setLoading(false)
@@ -78,7 +108,14 @@ function Trades({ onSelectTrade }) {
             const csrfData = await csrfResponse.json()
             const formData = new FormData()
 
-            formData.append('brokerAccountId', '1')
+            if (!brokerAccountId) {
+                throw new Error(
+                    'Create a broker account before importing executions.'
+                );
+            }
+
+            formData.append('brokerAccountId', String(brokerAccountId));
+
             formData.append('file', file)
 
             const response = await fetch(

@@ -17,21 +17,57 @@ function PnlChart() {
 
     const [data, setData] = useState([])
 
-    useEffect(() => {
-        fetch('http://localhost:8080/api/broker-accounts/1/analytics/pnl-trend',
-            {
-                credentials: 'include'
-            })
-            .then(response => {
-                if(!response.ok) {
-                    throw new Error('Failed to fetch P&L data')
-                }
-                return response.json()
-            })
-            .then(result => setData(result))
-            .catch(error => console.error(error))
 
-    }, [])
+    useEffect(() => {
+        async function loadPnlTrend() {
+            try {
+                // Find the logged-in user's broker account
+                const accountsResponse = await fetch(
+                    'http://localhost:8080/api/broker-accounts',
+                    { credentials: 'include' }
+                );
+
+                if (!accountsResponse.ok) {
+                    throw new Error(
+                        `Failed to load accounts: HTTP ${accountsResponse.status}`
+                    );
+                }
+
+                const accounts = await accountsResponse.json();
+
+                if (!Array.isArray(accounts) || accounts.length === 0) {
+                    setData([]);
+                    return;
+                }
+
+                const brokerAccountId = accounts[0].id;
+
+                const response = await fetch(
+                    `http://localhost:8080/api/broker-accounts/${brokerAccountId}/analytics/pnl-trend`,
+                    { credentials: 'include' }
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        `Failed to fetch P&L data: HTTP ${response.status}`
+                    );
+                }
+
+                const result = await response.json();
+
+                if (!Array.isArray(result)) {
+                    throw new Error('Expected P&L trend data to be a list.');
+                }
+
+                setData(result);
+            } catch (error) {
+                console.error('Error loading P&L trend:', error);
+            }
+        }
+
+        loadPnlTrend();
+    }, []);
+
 
     return (
 

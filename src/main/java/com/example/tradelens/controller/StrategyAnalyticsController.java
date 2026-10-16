@@ -10,6 +10,9 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.server.ResponseStatusException;
+import org.springframework.http.HttpStatus;
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,11 +30,17 @@ public class StrategyAnalyticsController {
     private final BrokerAccountRepository  brokerAccountRepository;
 
     @GetMapping("/strategies/{brokerAccountId}")
-    public List<StrategyAnalyticsResponse> getStrategyAnalytics(@PathVariable Long brokerAccountId) {
+    public List<StrategyAnalyticsResponse> getStrategyAnalytics(
+            @PathVariable Long brokerAccountId,
+            Authentication authentication) {
 
         BrokerAccount brokerAccount = brokerAccountRepository
-                .findById(brokerAccountId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .findByIdAndUser_Username(
+                        brokerAccountId,
+                        authentication.getName()
+                )
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
                         "Broker account not found"
                 ));
 

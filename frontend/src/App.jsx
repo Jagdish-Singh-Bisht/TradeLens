@@ -87,6 +87,11 @@ function AppLayout() {
                     />
 
                     <Route
+                        path="/behavior"
+                        element={<Behavior />}
+                    />
+
+                    <Route
                         path="/market-context"
                         element={<MarketContext />}
                     />

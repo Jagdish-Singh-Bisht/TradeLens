@@ -6,29 +6,65 @@ function MarketContext() {
     const [marketContext, setMarketContext] = useState(null)
     const [error, setError] = useState('')
 
+
     useEffect(() => {
-        fetch('http://localhost:8080/api/trades/market-context/1', {
-            credentials: 'include'
-        })
-            .then(response => {
+        async function loadMarketContext() {
+            try {
+                setError('');
+
+                const accountsResponse = await fetch(
+                    'http://localhost:8080/api/broker-accounts',
+                    { credentials: 'include' }
+                );
+
+                if (!accountsResponse.ok) {
+                    throw new Error(
+                        `Failed to load accounts: HTTP ${accountsResponse.status}`
+                    );
+                }
+
+                const accounts = await accountsResponse.json();
+
+                if (!Array.isArray(accounts) || accounts.length === 0) {
+                    setMarketContext([]);
+                    setError(
+                        'No broker account found. Create an account before viewing market context.'
+                    );
+                    return;
+                }
+
+                const brokerAccountId = accounts[0].id;
+
+                const response = await fetch(
+                    `http://localhost:8080/api/trades/market-context/${brokerAccountId}`,
+                    { credentials: 'include' }
+                );
+
                 if (!response.ok) {
                     throw new Error(
                         `Failed to load market context: HTTP ${response.status}`
-                    )
+                    );
                 }
-                return response.json()
-            })
-            .then(data => {
+
+                const data = await response.json();
+
                 if (!Array.isArray(data)) {
-                    throw new Error('Expected a list of market-context records')
+                    throw new Error(
+                        'Expected a list of market-context records.'
+                    );
                 }
-                setMarketContext(data)
-            })
-            .catch(error => {
-                console.error('Error loading market context:', error)
-                setError(error.message)
-            })
-    }, [])
+
+                setMarketContext(data);
+
+            } catch (error) {
+                console.error('Error loading market context:', error);
+                setError(error.message);
+            }
+        }
+
+        loadMarketContext();
+    }, []);
+
 
     if (error) {
         return (

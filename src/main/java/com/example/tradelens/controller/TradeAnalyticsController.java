@@ -11,6 +11,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.Authentication;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
+
 
 import lombok.RequiredArgsConstructor;
 
@@ -27,11 +31,17 @@ public class TradeAnalyticsController {
     private final BrokerAccountRepository brokerAccountRepository;
 
     @GetMapping("/{brokerAccountId}/analytics")
-    public TradeAnalyticsResponse getAnalytics(@PathVariable Long brokerAccountId) {
+    public TradeAnalyticsResponse getAnalytics(
+            @PathVariable Long brokerAccountId,
+            Authentication authentication) {
 
         BrokerAccount brokerAccount = brokerAccountRepository
-                .findById(brokerAccountId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .findByIdAndUser_Username(
+                        brokerAccountId,
+                        authentication.getName()
+                )
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
                         "Broker account not found"
                 ));
 
@@ -40,11 +50,17 @@ public class TradeAnalyticsController {
     }
 
     @GetMapping("/{brokerAccountId}/analytics/pnl-trend")
-    public List<PnlTrendResponse> getPnlTrend(@PathVariable Long brokerAccountId) {
+    public List<PnlTrendResponse> getPnlTrend(
+            @PathVariable Long brokerAccountId,
+            Authentication authentication) {
 
         BrokerAccount brokerAccount = brokerAccountRepository
-                .findById(brokerAccountId)
-                .orElseThrow(() -> new IllegalArgumentException(
+                .findByIdAndUser_Username(
+                        brokerAccountId,
+                        authentication.getName()
+                )
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
                         "Broker account not found"
                 ));
 

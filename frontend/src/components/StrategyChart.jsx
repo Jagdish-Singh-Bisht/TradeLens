@@ -16,28 +16,57 @@ function StrategyChart() {
 
     const [data, setData] = useState([])
 
+
     useEffect(() => {
-        fetch('http://localhost:8080/api/analytics/strategies/1',
-            {
-                credentials: 'include'
-            })
-            .then(response => {
-                if(!response.ok) {
-                    throw new Error('Failed to fetch strategy analytics')
+        async function loadStrategies() {
+            try {
+                const accountsResponse = await fetch(
+                    'http://localhost:8080/api/broker-accounts',
+                    { credentials: 'include' }
+                );
+
+                if (!accountsResponse.ok) {
+                    throw new Error(`Failed to load accounts: HTTP ${accountsResponse.status}`);
                 }
-                return response.json()
-            })
-            .then(result => {
+
+                const accounts = await accountsResponse.json();
+
+                if (!Array.isArray(accounts) || accounts.length === 0) {
+                    setData([]);
+                    return;
+                }
+
+                const accountId = accounts[0].id;
+
+                const response = await fetch(
+                    `http://localhost:8080/api/analytics/strategies/${accountId}`,
+                    { credentials: 'include' }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Failed to load strategies: HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                if (!Array.isArray(result)) {
+                    throw new Error('Expected strategy analytics to be a list.');
+                }
+
                 setData(result.map(item => ({
                     strategy: item.strategy,
-                    totalProfitLoss: Number(item.analytics.totalProfitLoss),
+                    totalProfitLoss: Number(item.analytics.totalProfitLoss ?? 0),
                     totalTrades: item.analytics.totalTrades,
-                    winRate: Number(item.analytics.winRate)
-                })))
-            })
-            .catch(error => console.error(error))
+                    winRate: Number(item.analytics.winRate ?? 0)
+                })));
+            } catch (error) {
+                console.error('Error loading strategy chart:', error);
+            }
+        }
 
-    }, [])
+        loadStrategies();
+    }, []);
+
 
     return (
 

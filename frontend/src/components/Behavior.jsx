@@ -16,22 +16,60 @@ function Behavior() {
     const [behavior, setBehavior] = useState(null)
     const [error, setError] = useState('')
 
+
     useEffect(() => {
-        fetch('http://localhost:8080/api/analytics/behavior/1', {
-            credentials: 'include'
-        })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Failed to load behavior analytics.')
+        async function loadBehavior() {
+            try {
+                setError('');
+
+                // Get the logged-in user's broker accounts
+                const accountsResponse = await fetch(
+                    'http://localhost:8080/api/broker-accounts',
+                    { credentials: 'include' }
+                );
+
+                if (!accountsResponse.ok) {
+                    throw new Error(
+                        `Failed to load accounts: HTTP ${accountsResponse.status}`
+                    );
                 }
-                return response.json()
-            })
-            .then(data => setBehavior(data))
-            .catch(error => {
-                console.error('Error loading behavior:', error)
-                setError(error.message)
-            })
-    }, [])
+
+                const accounts = await accountsResponse.json();
+
+                if (!Array.isArray(accounts) || accounts.length === 0) {
+                    setError(
+                        'No broker account found. Create an account to view trading behavior.'
+                    );
+                    return;
+                }
+
+                // Use the actual account ID
+                const brokerAccountId = accounts[0].id;
+
+                const response = await fetch(
+                    `http://localhost:8080/api/analytics/behavior/${brokerAccountId}`,
+                    { credentials: 'include' }
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        `Failed to load behavior analytics: HTTP ${response.status}`
+                    );
+                }
+
+                const data = await response.json();
+                setBehavior(data);
+
+            } catch (error) {
+                console.error('Error loading behavior:', error);
+                setError(error.message);
+            }
+        }
+
+        loadBehavior();
+
+    }, []);
+
 
     if (error) {
         return (

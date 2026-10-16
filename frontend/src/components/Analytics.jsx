@@ -6,26 +6,75 @@ function Analytics() {
 
     const [analytics, setAnalytics] = useState(null)
 
+
     useEffect(() => {
-        fetch('http://localhost:8080/api/broker-accounts/1/analytics',
-            {
-                credentials: 'include'
-            })
-            .then(response => response.json())
-            .then(data => setAnalytics(data))
-            .catch(error => console.error('Error loading analytics: ', error))
+        async function loadAnalytics() {
+            try {
+                const accountsResponse = await fetch(
+                    'http://localhost:8080/api/broker-accounts',
+                    { credentials: 'include' }
+                );
 
-    }, [])
+                if (!accountsResponse.ok) {
+                    throw new Error(
+                        `Failed to load accounts: HTTP ${accountsResponse.status}`
+                    );
+                }
 
-    if(!analytics) {
+                const accounts = await accountsResponse.json();
 
+                if (!Array.isArray(accounts) || accounts.length === 0) {
+                    setAnalytics(null);
+                    return;
+                }
+
+                const accountId = accounts[0].id;
+
+                const response = await fetch(
+                    `http://localhost:8080/api/broker-accounts/${accountId}/analytics`,
+                    { credentials: 'include' }
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        `Failed to load analytics: HTTP ${response.status}`
+                    );
+                }
+
+                const result = await response.json();
+                setAnalytics(result);
+            } catch (error) {
+                console.error('Error loading analytics:', error);
+            }
+        }
+
+        loadAnalytics();
+    }, []);
+
+
+
+    if (!analytics) {
         return (
             <main>
                 <h2>Analytics</h2>
                 <p>Loading analytics...</p>
             </main>
-        )
+        );
     }
+
+    if (analytics.message) {
+        return (
+            <main className="analytics">
+                <h2>Trading Analytics</h2>
+                <p>
+                    {analytics.message === 'NO_BROKER_ACCOUNT'
+                        ? 'No broker account found. Analytics will be available after an account is created.'
+                        : analytics.message}
+                </p>
+            </main>
+        );
+    }
+
 
     return (
 
