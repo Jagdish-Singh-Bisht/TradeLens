@@ -1,5 +1,5 @@
 
-function Sidebar({onNavigate, currentPage}) {
+function Sidebar({ onNavigate, currentPage, onLogout }) {
 
     return (
         <aside className="sidebar">
@@ -45,6 +45,10 @@ function Sidebar({onNavigate, currentPage}) {
                     className={currentPage === 'market-context' ? 'active' : ''}
                     onClick={() => onNavigate('market-context')} >
                     Market Context
+                </button>
+
+                <button type="button" onClick={onLogout}>
+                    Logout
                 </button>
 
             </nav>

@@ -8,6 +8,7 @@ import Trades from './components/Trades'
 import Sidebar from './components/Sidebar'
 import Dashboard from './components/Dashboard'
 import Login from './components/Login'
+import Signup from "./components/Signup";
 import './App.css'
 
 
@@ -29,7 +30,7 @@ function TradeDetailsPage() {
     return <TradeDetails tradeId={tradeId} />
 }
 
-function AppLayout() {
+function ProtectedApp({ onLogout }) {
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -46,6 +47,7 @@ function AppLayout() {
                 <Sidebar
                     onNavigate={(nextPage) => navigate(`/${nextPage}`)}
                     currentPage={currentPage}
+                    onLogout={onLogout}
                 />
 
                 <Routes>
@@ -105,44 +107,153 @@ function AppLayout() {
 
             </div>
         </div>
+
     )
+
+}
+
+function getCookie(name) {
+
+    const prefix = name + "="
+
+    const cookie = document.cookie
+        .split("; ")
+        .find((item) => item.startsWith(prefix))
+
+    return cookie ? decodeURIComponent(cookie.substring(prefix.length)) : ""
+
+}
+
+function AppContent() {
+
+    const [isLoggedIn, setIsLoggedIn] = useState(null);
+    const [checkingSession, setCheckingSession] = useState(true);
+
+    const navigate = useNavigate();
+    const location = useLocation();
+
+    useEffect(() => {
+
+        let active = true;
+
+        fetch('http://localhost:8080/api/auth/me',
+            {
+                credentials: 'include'
+            })
+            .then((response) => {
+                if (active) {
+                    setIsLoggedIn(response.ok);
+                }
+            })
+            .catch(() => {
+                if (active) {
+                    setIsLoggedIn(false);
+                }
+            })
+            .finally(() => {
+                if (active) {
+                    setCheckingSession(false);
+                }
+            });
+
+        return () => {
+            active = false;
+        }
+
+    }, [])
+
+    if (checkingSession) {
+        return <p>Checking login...</p>
+    }
+
+
+    const isAuthPage =
+        location.pathname === "/login" ||
+        location.pathname === "/signup"
+
+    if (!isLoggedIn) {
+        if(location.pathname === "/signup")
+        {
+            return (
+                <Signup
+                    onSignup={() => navigate("/login", {replace: true})}
+                />
+            )
+        }
+
+        if (location.pathname !== "/login") {
+            return <Navigate to="/login" replace/>
+        }
+
+        return (
+            <Login
+                onLogin={() => {
+                    setIsLoggedIn(true)
+                    navigate("/dashboard", {replace: true})
+                }}
+            />
+        )
+    }
+
+    if (isAuthPage) {
+        return <Navigate to="/dashboard" replace/>
+    }
+
+    const handleLogout = async () => {
+
+        try {
+
+            const csrfResponse = await fetch(
+                'http://localhost:8080/api/auth/csrf',
+                {
+                    credentials: 'include'
+                }
+            )
+
+            if(!csrfResponse.ok) {
+                throw new Error("Could not obtain CSRF token.")
+            }
+
+            const csrfData = await csrfResponse.json();
+
+            const response = await fetch(
+                "http://localhost:8080/logout",
+                {
+                    method: "POST",
+                    credentials: 'include',
+                    headers: {
+                        "X-XSRF-TOKEN": csrfData.token,
+                    },
+                }
+            );
+
+            if(!response.ok) {
+                throw new Error("Logout failed.")
+            }
+
+            setIsLoggedIn(false)
+            navigate("/login", { replace: true })
+
+        } catch (err) {
+            console.error(err)
+            alert("Could not log out. Please try again.")
+        }
+    }
+
+
+    return <ProtectedApp onLogout={handleLogout} />
 
 }
 
 function App() {
 
-    const [isLoggedIn, setIsLoggedIn] = useState(null)
-    const [page, setPage] = useState('dashboard')
-    const [selectedTradeId, setSelectedTradeId] = useState(null)
-
-    useEffect(() => {
-        fetch('http://localhost:8080/api/auth/me',
-            {
-                credentials: 'include'
-            })
-            .then(response => {
-                setIsLoggedIn(response.ok)
-            })
-            .catch(() => {
-                setIsLoggedIn(false)
-            })
-    }, [])
-
-
-    if(!isLoggedIn === null) {
-        return <p>Checking Login...</p>
-    }
-
-    if(!isLoggedIn) {
-        return <Login onLogin={() => setIsLoggedIn(true)} />
-    }
-
-  return (
-      <BrowserRouter>
-          <AppLayout />
-      </BrowserRouter>
-  )
-
+    return (
+        <BrowserRouter>
+            <Routes>
+                <Route path="/*" element={<AppContent />} />
+            </Routes>
+        </BrowserRouter>
+    )
 }
 
 export default App

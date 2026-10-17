@@ -32,7 +32,7 @@ public class AuthService {
         }
 
         if(request.getPassword() == null
-            || request.getPassword().length() < 8) {
+                || request.getPassword().length() < 8) {
             throw new IllegalArgumentException(
                     "Password must be at least 8 characters"
             );
