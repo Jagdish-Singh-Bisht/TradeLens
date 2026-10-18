@@ -12,6 +12,7 @@ import com.example.tradelens.repository.BrokerAccountRepository;
 import com.example.tradelens.repository.ExecutionRepository;
 import com.example.tradelens.repository.InstrumentRepository;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -21,6 +22,7 @@ import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -46,7 +48,9 @@ public class CsvImportService {
     private final TradeReconstructionService tradeReconstructionService;
 
     @Transactional
-    public void importExecutions(Long brokerAccountId, MultipartFile file) {
+    public void importExecutions(Long brokerAccountId,
+                                 MultipartFile file,
+                                 String username) {
 
         try (
                 BufferedReader reader = new BufferedReader(
@@ -65,8 +69,9 @@ public class CsvImportService {
         ) {
 
             BrokerAccount brokerAccount = brokerAccountRepository
-                    .findById(brokerAccountId)
-                    .orElseThrow(() -> new IllegalArgumentException(
+                    .findByIdAndUser_Username(brokerAccountId, username)
+                    .orElseThrow(() -> new ResponseStatusException(
+                            HttpStatus.NOT_FOUND,
                             "Broker account not found"
                     ));
 

@@ -11,51 +11,79 @@ function TradeDetails({ tradeId }) {
     const [mfe, setMfe] = useState(null)
     const [mae, setMae] = useState(null)
     const [postExitMovement, setPostExitMovement] = useState(null)
+    const [tradeLoading, setTradeLoading] = useState(true)
+    const [tradeError, setTradeError] = useState("")
 
-    useEffect(() => {
-        loadTrade()
+    const loadTrade = async () => {
+        setTradeLoading(true)
+        setTradeError("")
+        setTrade(null)
 
-        fetch(`http://localhost:8080/api/trades/${tradeId}/decision-analysis`,
-            {
-                credentials: 'include'
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Decision analysis: ', data)
-                setDecisionAnalysis(data)
-            })
+        try {
 
-        fetch(`http://localhost:8080/api/trades/${tradeId}/mfe`,
-            {
-                credentials: 'include'
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('MFE: ', data)
-                setMfe(data)
-            })
+            const response = await fetch(
+                `http://localhost:8080/api/trades/${tradeId}`,
+                {
+                    credentials: "include"
+                }
+            )
 
-        fetch(`http://localhost:8080/api/trades/${tradeId}/mae`,
-            {
-                credentials: 'include'
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('MAE: ', data)
-                setMae(data)
-            })
+            if(response.status === 404) {
+                setTradeError("Trade not found or you don't have access to it.")
+                return
+            }
 
-        fetch(`http://localhost:8080/api/trades/${tradeId}/post-exit-movement`,
-            {
-                credentials: 'include'
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Post-exit movement: ', data)
-                setPostExitMovement(data)
-            })
+            if(!response.ok) {
+                throw new Error(`Failed to load trade (HTTP ${response.status}).`)
+            }
 
-    }, [tradeId])
+            const data = await response.json()
+            setTrade(data)
+
+            const endpoints = [
+                ["decisionAnalysis", "decision-analysis"],
+                ["mfe", "mfe"],
+                ["mae", "mae"],
+                ["postExitMovement", "postExitMovement"],
+            ]
+
+            const results = await Promise.all(
+                endpoints.map(async ([key, endpoint]) => {
+                    const result = await fetch(
+                        `http://localhost:8080/api/trades/${tradeId}/${endpoint}`,
+                        {
+                            credentials: "include"
+                        }
+                    )
+
+                    if(!result.ok) {
+                        console.error(
+                            `${endpoint} failed: HTTP ${result.status}`
+                        )
+                        return [key, null]
+                    }
+                    return [key, await result.json()]
+
+                })
+            )
+
+            const values = Object.fromEntries(results)
+
+            setDecisionAnalysis(values.decisionAnalysis)
+            setMfe(values.mfe)
+            setMae(values.mae)
+            setPostExitMovement(values.postExitMovement)
+
+        } catch (err) {
+            console.error("Error loading trade: ", err)
+            setTradeError("Unable to load trade details. Please try again")
+        } finally {
+            setTradeLoading(false)
+        }
+
+    }
+
+
 
     const [form, setForm] = useState({
         strategy: '',
@@ -67,17 +95,10 @@ function TradeDetails({ tradeId }) {
         exitReason: ''
     })
 
-    const loadTrade = () => {
-        fetch(`http://localhost:8080/api/trades/${tradeId}`,
-            {
-                credentials: 'include'
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Trade details:', data)
-                setTrade(data)
-            })
-    }
+    useEffect(() => {
+        loadTrade()
+
+    }, [tradeId])
 
     const handleChange = (e) => {
         setForm({
@@ -139,8 +160,18 @@ function TradeDetails({ tradeId }) {
         }
     }
 
+    if(tradeLoading) {
+
+        return (
+            <main className="trade-details-page">
+                <h2>Trade Details</h2>
+                <p role="alert">{tradeError}</p>
+            </main>
+        )
+    }
+
     if(!trade) {
-        return <main>Loading Trade...</main>
+        return <main>Trade not found.</main>
     }
 
     const formatAmount = (value) => {

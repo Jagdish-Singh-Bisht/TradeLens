@@ -4,6 +4,7 @@ package com.example.tradelens.controller;
 import com.example.tradelens.dto.DecisionVsActualResponse;
 import com.example.tradelens.service.DecisionVsActualService;
 
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -21,9 +22,13 @@ public class DecisionVsActualController {
     private final DecisionVsActualService decisionVsActualService;
 
     @GetMapping("/{tradeId}/decision-analysis")
-    public DecisionVsActualResponse analyze(@PathVariable Long tradeId) {
+    public DecisionVsActualResponse analyze(@PathVariable Long tradeId,
+                                            Authentication authentication) {
 
-        return decisionVsActualService.analyze(tradeId);
+        return decisionVsActualService.analyze(
+                tradeId,
+                authentication.getName()
+        );
 
     }
 

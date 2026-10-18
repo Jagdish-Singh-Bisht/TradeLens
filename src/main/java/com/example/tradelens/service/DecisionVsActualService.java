@@ -6,9 +6,11 @@ import com.example.tradelens.entity.Decision;
 import com.example.tradelens.entity.Trade;
 import com.example.tradelens.repository.TradeRepository;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 
@@ -19,11 +21,15 @@ public class DecisionVsActualService {
 
     private final TradeRepository tradeRepository;
 
-    public DecisionVsActualResponse analyze(Long tradeId) {
+    public DecisionVsActualResponse analyze(Long tradeId,
+                                            String username) {
 
         Trade trade = tradeRepository
-                .findById(tradeId)
-                .orElseThrow(() -> new IllegalArgumentException("Trade not found"));
+                .findByIdAndBrokerAccount_User_Username(tradeId, username)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Trade not found"
+                ));
 
         Decision decision = trade.getDecision();
 
