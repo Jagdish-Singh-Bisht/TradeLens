@@ -30,7 +30,7 @@ function TradeDetailsPage() {
     return <TradeDetails tradeId={tradeId} />
 }
 
-function ProtectedApp({ onLogout }) {
+function ProtectedApp({ onLogout, role }) {
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -65,6 +65,7 @@ function ProtectedApp({ onLogout }) {
                         path="/trades"
                         element={
                             <Trades
+                                role={role}
                                 onSelectTrade={(tradeId) => {
                                     navigate(`/trades/${tradeId}`)
                                 }}
@@ -127,10 +128,30 @@ function getCookie(name) {
 function AppContent() {
 
     const [isLoggedIn, setIsLoggedIn] = useState(null);
+    const [role, setRole] = useState(null);
     const [checkingSession, setCheckingSession] = useState(true);
 
     const navigate = useNavigate();
     const location = useLocation();
+
+    const loadCurrentUser = async () => {
+        const response = await fetch(
+            "http://localhost:8080/api/auth/me",
+            {
+                credentials: "include"
+            }
+        )
+
+        if(!response.ok) {
+            throw new Error("Unable to load current user.");
+        }
+
+        const userData = await response.json();
+
+        setIsLoggedIn(true);
+        setRole(userData.role);
+
+    }
 
     useEffect(() => {
 
@@ -140,14 +161,24 @@ function AppContent() {
             {
                 credentials: 'include'
             })
-            .then((response) => {
+            .then(async (response) => {
+
+                if(!response.ok) {
+                    throw new Error("Not authenticated");
+                }
+
+                const userData = await response.json();
+
                 if (active) {
                     setIsLoggedIn(response.ok);
+                    setRole(userData.role);
                 }
+
             })
             .catch(() => {
                 if (active) {
                     setIsLoggedIn(false);
+                    setRole(null);
                 }
             })
             .finally(() => {
@@ -187,9 +218,18 @@ function AppContent() {
 
         return (
             <Login
-                onLogin={() => {
-                    setIsLoggedIn(true)
-                    navigate("/dashboard", {replace: true})
+                onLogin={async () => {
+
+                    try {
+                        await loadCurrentUser()
+                        navigate("/dashboard", { replace: true })
+
+                    } catch (err) {
+                        console.error(err)
+                        setIsLoggedIn(false)
+                        setRole(null)
+                    }
+
                 }}
             />
         )
@@ -241,7 +281,10 @@ function AppContent() {
     }
 
 
-    return <ProtectedApp onLogout={handleLogout} />
+    return <ProtectedApp
+        onLogout={handleLogout}
+        role={role}
+    />
 
 }
 

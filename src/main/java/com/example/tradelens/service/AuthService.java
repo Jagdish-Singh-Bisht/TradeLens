@@ -52,10 +52,12 @@ public class AuthService {
         }
 
         User user = new User();
+
         user.setUsername(username);
         user.setEmail(email);
-
         user.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        user.setRole("USER");
 
         userRepository.save(user);
 

@@ -6,6 +6,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
+import jakarta.persistence.Column;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -32,5 +33,8 @@ public class User {
     private String email;
 
     private String password;
+
+    @Column(nullable = false, length = 20)
+    private String role = "USER";
 
 }

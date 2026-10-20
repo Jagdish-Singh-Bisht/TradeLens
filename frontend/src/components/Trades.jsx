@@ -1,7 +1,7 @@
 import './Trades.css'
 import { useEffect, useState } from 'react'
 
-function Trades({ onSelectTrade }) {
+function Trades({ onSelectTrade, role }) {
     const [trades, setTrades] = useState([])
     const [file, setFile] = useState(null)
 
@@ -289,48 +289,52 @@ function Trades({ onSelectTrade }) {
                 )}
             </section>
 
+            { role === 'ADMIN' && (
 
-            <section className="trades-import">
-                <h3>Import Market Candles</h3>
-                <p>
-                    Upload historical OHLCV candle data for your candlestick charts.
-                </p>
-
-                <div className="trades-import-controls">
-                    <input
-                        type="file"
-                        accept=".csv"
-                        onChange={(event) => {
-                            setCandleFile(event.target.files[0] || null)
-                            setCandleMessage('')
-                            setCandleError('')
-                        }}
-                    />
-
-                    <button
-                        onClick={handleCandleUpload}
-                        disabled={!candleFile || importingCandles}
-                    >
-                        {importingCandles ? 'Importing...' : 'Import Candles'}
-                    </button>
-                </div>
-
-                {candleFile && (
-                    <p>Selected file: {candleFile.name}</p>
-                )}
-
-                {candleMessage && (
-                    <p className="trades-success" role="status">
-                        {candleMessage}
+                <section className="trades-import">
+                    <h3>Import Market Candles</h3>
+                    <p>
+                        Upload historical OHLCV candle data for your candlestick charts.
                     </p>
-                )}
 
-                {candleError && (
-                    <p className="trades-error" role="alert">
-                        {candleError}
-                    </p>
-                )}
-            </section>
+                    <div className="trades-import-controls">
+                        <input
+                            type="file"
+                            accept=".csv"
+                            onChange={(event) => {
+                                setCandleFile(event.target.files[0] || null)
+                                setCandleMessage('')
+                                setCandleError('')
+                            }}
+                        />
+
+                        <button
+                            onClick={handleCandleUpload}
+                            disabled={!candleFile || importingCandles}
+                        >
+                            {importingCandles ? 'Importing...' : 'Import Candles'}
+                        </button>
+                    </div>
+
+                    {candleFile && (
+                        <p>Selected file: {candleFile.name}</p>
+                    )}
+
+                    {candleMessage && (
+                        <p className="trades-success" role="status">
+                            {candleMessage}
+                        </p>
+                    )}
+
+                    {candleError && (
+                        <p className="trades-error" role="alert">
+                            {candleError}
+                        </p>
+                    )}
+                </section>
+
+            )}
+
 
 
             <section className="trades-history">
