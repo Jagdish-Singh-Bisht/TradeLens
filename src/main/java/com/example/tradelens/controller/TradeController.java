@@ -2,6 +2,8 @@ package com.example.tradelens.controller;
 
 
 
+import com.example.tradelens.dto.TradeResponse;
+import com.example.tradelens.entity.Decision;
 import com.example.tradelens.entity.Trade;
 import com.example.tradelens.repository.TradeRepository;
 
@@ -28,7 +30,7 @@ public class TradeController {
     private final TradeRepository tradeRepository;
 
     @GetMapping("/broker-account/{brokerAccountId}")
-    public List<Trade> getTrades(
+    public List<TradeResponse> getTrades(
             @PathVariable Long brokerAccountId,
             Authentication authentication) {
 
@@ -36,15 +38,18 @@ public class TradeController {
                 .findByBrokerAccount_IdAndBrokerAccount_User_Username(
                         brokerAccountId,
                         authentication.getName()
-                );
+                )
+                .stream()
+                .map(this::toTradeResponse)
+                .toList();
 
     }
 
     @GetMapping("/{tradeId}")
-    public Trade getTrade(@PathVariable Long tradeId,
+    public TradeResponse getTrade(@PathVariable Long tradeId,
                           Authentication authentication) {
 
-        return tradeRepository
+        Trade trade = tradeRepository
                 .findByIdAndBrokerAccount_User_Username(
                         tradeId,
                         authentication.getName()
@@ -53,6 +58,41 @@ public class TradeController {
                         HttpStatus.NOT_FOUND, "Trade not found"
                 ));
 
+        return toTradeResponse(trade);
+
+    }
+
+    public TradeResponse toTradeResponse(Trade trade) {
+
+        Decision decision = trade.getDecision();
+
+        TradeResponse.DecisionResponse decisionResponse = decision == null
+                ? null
+                : new TradeResponse.DecisionResponse(
+                decision.getStrategy(),
+                decision.getPlannedEntry(),
+                decision.getTarget(),
+                decision.getStopLoss(),
+                decision.getConfidence(),
+                decision.getEntryReason(),
+                decision.getExitReason()
+        );
+
+        return new TradeResponse(
+                trade.getId(),
+                trade.getInstrument() != null
+                        ? trade.getInstrument().getSymbol() : null,
+                trade.getInstrument() != null
+                        ? trade.getInstrument().getExchange() : null,
+                trade.getQuantity(),
+                trade.getEntryPrice(),
+                trade.getExitPrice(),
+                trade.getEntryTime(),
+                trade.getExitTime(),
+                trade.getProfitLoss(),
+                decisionResponse
+
+        );
     }
 
 }
