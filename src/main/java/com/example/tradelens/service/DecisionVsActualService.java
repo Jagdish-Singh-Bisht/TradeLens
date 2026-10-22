@@ -34,7 +34,10 @@ public class DecisionVsActualService {
         Decision decision = trade.getDecision();
 
         if(decision == null) {
-            throw new IllegalArgumentException("Decision not found for trade");
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND,
+                    "Decision not found for trade"
+            );
         }
 
         BigDecimal entryDeviation = trade.getEntryPrice()

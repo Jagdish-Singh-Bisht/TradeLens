@@ -13,6 +13,7 @@ function TradeDetails({ tradeId }) {
     const [postExitMovement, setPostExitMovement] = useState(null)
     const [tradeLoading, setTradeLoading] = useState(true)
     const [tradeError, setTradeError] = useState("")
+    const [isEditingDecision, setIsEditingDecision] = useState(false)
 
     const loadTrade = async () => {
         setTradeLoading(true)
@@ -44,7 +45,7 @@ function TradeDetails({ tradeId }) {
                 ["decisionAnalysis", "decision-analysis"],
                 ["mfe", "mfe"],
                 ["mae", "mae"],
-                ["postExitMovement", "postExitMovement"],
+                ["postExitMovement", "post-exit-movement"],
             ]
 
             const results = await Promise.all(
@@ -153,7 +154,10 @@ function TradeDetails({ tradeId }) {
                 exitReason: ''
             })
 
-            loadTrade()
+            setIsEditingDecision(false)
+
+            await loadTrade()
+
         } else {
             const error = await response.text()
             console.log('Decision save error: ', error)
@@ -193,8 +197,8 @@ function TradeDetails({ tradeId }) {
             <section className="trade-summary">
                 <div className="trade-title">
                     <div>
-                        <h3>{trade.instrument.symbol}</h3>
-                        <span>{trade.instrument.exchange}</span>
+                        <h3>{trade.symbol}</h3>
+                        <span>{trade.exchange}</span>
                     </div>
                 </div>
 
@@ -244,7 +248,7 @@ function TradeDetails({ tradeId }) {
                     <span>Pre-trade plan</span>
                 </div>
 
-                {trade.decision ? (
+                {trade.decision && !isEditingDecision ? (
                     <div className="decision-card">
 
                         <div className="decision-grid">
@@ -290,7 +294,25 @@ function TradeDetails({ tradeId }) {
 
                         </div>
 
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setForm({
+                                    strategy: trade.decision.strategy ?? '',
+                                    plannedEntry: trade.decision.plannedEntry ?? '',
+                                    target: trade.decision.target ?? '',
+                                    stopLoss: trade.decision.stopLoss ?? '',
+                                    confidence: trade.decision.confidence ?? '',
+                                    entryReason: trade.decision.entryReason ?? '',
+                                    exitReason: trade.decision.exitReason ?? ''
+                                })
+                                setIsEditingDecision(true)
+                            }}
+                        >
+                            Edit Decision
+                        </button>
                     </div>
+
                 ) : (
 
                     <form className="trade-decision-form" onSubmit={handleSubmit}>
@@ -368,8 +390,28 @@ function TradeDetails({ tradeId }) {
                         </div>
 
                         <button type="submit">
-                            Save Decision
+                            {isEditingDecision ? 'Update Decision' : 'Save Decision'}
                         </button>
+
+                        { isEditingDecision && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setIsEditingDecision(false)
+                                    setForm({
+                                        strategy: '',
+                                        plannedEntry: '',
+                                        target: '',
+                                        stopLoss: '',
+                                        confidence: '',
+                                        entryReason: '',
+                                        exitReason: ''
+                                    })
+                                }}
+                            >
+                                Cancel
+                            </button>
+                        )}
 
                     </form>
 
@@ -384,7 +426,11 @@ function TradeDetails({ tradeId }) {
 
                 {!decisionAnalysis ? (
                     <div className="loading-card">
-                        <p>Loading decision analysis...</p>
+                        <p>
+                            { !trade.decision
+                                ? "Save a trading decision to view the analysis."
+                                : "Unable to load decision analysis. Please try again."}
+                        </p>
                     </div>
                 ) : (
                     <div className="analysis-card">
@@ -520,8 +566,8 @@ function TradeDetails({ tradeId }) {
                             <h4>Historical Price Movement</h4>
 
                             <CandlestickChart
-                                symbol={trade.instrument?.symbol}
-                                exchange={trade.instrument?.exchange}
+                                symbol={trade.symbol}
+                                exchange={trade.exchange}
                                 entryTime={trade.entryTime}
                                 exitTime={trade.exitTime}
                                 entryPrice={trade.entryPrice}

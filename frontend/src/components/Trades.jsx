@@ -206,7 +206,7 @@ function Trades({ onSelectTrade, role }) {
 
 
     const filteredTrades = trades.filter((trade) => {
-        const symbol = trade.instrument?.symbol || ''
+        const symbol = trade.symbol || ''
 
         const matchesSearch = symbol
             .toLowerCase()
@@ -417,7 +417,7 @@ function Trades({ onSelectTrade, role }) {
                                         }}
                                     >
                                         <td>
-                                            {trade.instrument?.symbol || '—'}
+                                            {trade.symbol || '—'}
                                         </td>
                                         <td>{trade.quantity ?? '—'}</td>
                                         <td>{formatPrice(trade.entryPrice)}</td>

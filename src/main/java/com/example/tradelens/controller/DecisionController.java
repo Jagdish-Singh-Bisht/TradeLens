@@ -53,7 +53,11 @@ public class DecisionController {
         decision.setEntryReason(request.getEntryReason());
         decision.setExitReason(request.getExitReason());
 
-        decisionService.createDecision(tradeId, decision);
+        decisionService.createDecision(
+                tradeId,
+                authentication.getName(),
+                decision
+        );
 
     }
 
