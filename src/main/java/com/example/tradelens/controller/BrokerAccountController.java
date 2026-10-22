@@ -1,6 +1,7 @@
 
 package com.example.tradelens.controller;
 
+import com.example.tradelens.dto.BrokerAccountResponse;
 import com.example.tradelens.entity.BrokerAccount;
 import com.example.tradelens.entity.User;
 import com.example.tradelens.repository.BrokerAccountRepository;
@@ -27,16 +28,23 @@ public class BrokerAccountController {
     private final UserRepository userRepository;
 
     @GetMapping
-    public List<BrokerAccount> getMyBrokerAccounts(
+    public List<BrokerAccountResponse> getMyBrokerAccounts(
             Authentication authentication) {
 
         return brokerAccountRepository
-                .findByUser_Username(authentication.getName());
+                .findByUser_Username(authentication.getName())
+                .stream()
+                .map(account -> new BrokerAccountResponse(
+                        account.getId(),
+                        account.getBrokerName(),
+                        account.getAccountName()
+                ))
+                .toList();
     }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public BrokerAccount createBrokerAccount(
+    public BrokerAccountResponse createBrokerAccount(
             @RequestBody Map<String, String> request,
             Authentication authentication) {
 
@@ -63,6 +71,13 @@ public class BrokerAccountController {
         account.setAccountName(accountName.trim());
         account.setUser(user);
 
-        return brokerAccountRepository.save(account);
+        BrokerAccount savedAccount = brokerAccountRepository.save(account);
+
+        return new BrokerAccountResponse(
+                savedAccount.getId(),
+                savedAccount.getBrokerName(),
+                savedAccount.getAccountName()
+        );
+
     }
 }
