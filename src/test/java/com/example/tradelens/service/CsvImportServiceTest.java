@@ -74,8 +74,9 @@ public class CsvImportServiceTest {
 
         String csv = """
                 order_id,symbol,exchange,side,quantity,price,executed_at
-                CSV-TEST-BUY,RELIANCE,NSE,BUY,10,1400.00,2026-09-23T09:30:00
-                CSV-TEST-SELL,RELIANCE,NSE,SELL,10,1450.00,2026-09-23T10:00:00
+                TEST-BUY-INVALID-001,RELIANCE,NSE,BUY,10,1400.00,2026-09-23T09:30:00
+                TEST-BAD-INVALID-001,RELIANCE,NSE,BUY,abc,1400.00,2026-09-23T09:45:00
+                TEST-SELL-INVALID-001,RELIANCE,NSE,SELL,10,1450.00,2026-09-23T10:00:00
                 """;
 
         MockMultipartFile file = new MockMultipartFile(

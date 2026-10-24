@@ -2,6 +2,7 @@ package com.example.tradelens.controller;
 
 
 
+import com.example.tradelens.dto.CsvImportReport;
 import com.example.tradelens.repository.BrokerAccountRepository;
 import com.example.tradelens.service.CsvImportService;
 
@@ -27,28 +28,17 @@ public class CsvImportController {
     private final BrokerAccountRepository brokerAccountRepository;
 
     @PostMapping("/executions")
-    public String importExecutions(
+    public CsvImportReport importExecutions(
             @RequestParam("brokerAccountId") Long brokerAccountId,
             @RequestParam("file") MultipartFile file,
             Authentication authentication) {
 
-        brokerAccountRepository
-                .findByIdAndUser_Username(
-                        brokerAccountId,
-                        authentication.getName()
-                )
-                        .orElseThrow(() -> new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "Broker account not found"
-                        ));
-
-        csvImportService.importExecutions(
+        return csvImportService.importExecutions(
                 brokerAccountId,
                 file,
                 authentication.getName()
         );
 
-        return "CSV received";
     }
 
 }

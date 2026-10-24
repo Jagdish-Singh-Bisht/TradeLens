@@ -2,6 +2,7 @@ package com.example.tradelens.service;
 
 
 
+import com.example.tradelens.dto.CsvImportReport;
 import com.example.tradelens.exception.InvalidCsvException;
 import com.example.tradelens.dto.ExecutionCsvRow;
 import com.example.tradelens.entity.enums.ExecutionSide;
@@ -30,9 +31,10 @@ import java.nio.charset.StandardCharsets;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-
-
-
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 
 @Service
@@ -48,9 +50,23 @@ public class CsvImportService {
     private final TradeReconstructionService tradeReconstructionService;
 
     @Transactional
-    public void importExecutions(Long brokerAccountId,
+    public CsvImportReport importExecutions(Long brokerAccountId,
                                  MultipartFile file,
                                  String username) {
+
+        BrokerAccount brokerAccount = brokerAccountRepository
+                .findByIdAndUser_Username(brokerAccountId, username)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Broker account not found"
+                ));
+
+        List<CsvImportReport.RowError> errors = new ArrayList<>();
+        List<ValidatedRow> validRows = new ArrayList<>();
+        Set<String> seenOrderIds = new HashSet<>();
+
+        int totalRows = 0;
+        int skippedRows = 0;
 
         try (
                 BufferedReader reader = new BufferedReader(
@@ -67,75 +83,130 @@ public class CsvImportService {
                         .get()
                         .parse(reader);
         ) {
-
-            BrokerAccount brokerAccount = brokerAccountRepository
-                    .findByIdAndUser_Username(brokerAccountId, username)
-                    .orElseThrow(() -> new ResponseStatusException(
-                            HttpStatus.NOT_FOUND,
-                            "Broker account not found"
-                    ));
-
-
-
+            //            List<ExecutionCsvRow> rows = new ArrayList<>();
             for (CSVRecord record : parser) {
 
-                ExecutionCsvRow row = new ExecutionCsvRow(
-                        record.get("order_id"),
-                        record.get("symbol"),
-                        record.get("exchange"),
-                        record.get("side"),
-                        new BigDecimal(record.get("quantity")),
-                        new BigDecimal(record.get("price")),
-                        LocalDateTime.parse(record.get("executed_at"))
-                );
+                totalRows++;
 
-                if (executionRepository
-                        .findByBrokerAccountAndOrderId(brokerAccount, row.orderId())
-                        .isPresent()) {
-                    System.out.println("Skipping duplicate order: " + row.orderId());
-                    continue;
+                long rowNumber = record.getRecordNumber() + 1;
+
+                try {
+
+                    ExecutionCsvRow row = new ExecutionCsvRow(
+                            record.get("order_id").trim(),
+                            record.get("symbol").trim(),
+                            record.get("exchange").trim(),
+                            record.get("side").trim(),
+                            new BigDecimal(record.get("quantity").trim()),
+                            new BigDecimal(record.get("price").trim()),
+                            LocalDateTime.parse(record.get("executed_at").trim())
+                    );
+
+                    if (row.orderId().isBlank()
+                            || row.symbol().isBlank()
+                            || row.exchange().isBlank()) {
+
+                        throw new IllegalArgumentException(
+                                "Order ID, symbol and exchange are required"
+                        );
+
+                    }
+
+                    if (row.quantity().signum() <= 0
+                            || row.price().signum() <= 0) {
+
+                        throw new IllegalArgumentException(
+                                "Quantity and price must be greater than zero"
+                        );
+                    }
+
+                    ExecutionSide side = ExecutionSide.valueOf(row.side());
+
+                    Instrument instrument = instrumentRepository.findBySymbolAndExchange(
+                                    row.symbol(),
+                                    row.exchange()
+                            )
+                            .orElseThrow(() -> new IllegalArgumentException(
+                                    "Instrument not found: "
+                                            + row.symbol()
+                                            + " on "
+                                            + row.exchange()
+                            ));
+
+                    if (executionRepository
+                            .findByBrokerAccountAndOrderId(
+                                    brokerAccount,
+                                    row.orderId()
+                            )
+                            .isPresent()) {
+
+                        skippedRows++;
+                        continue;
+                    }
+
+                    if (!seenOrderIds.add(row.orderId())) {
+                        skippedRows++;
+                        continue;
+                    }
+
+                    validRows.add(new ValidatedRow(
+                            rowNumber, row, instrument, side
+                    ));
+
+                } catch (Exception e) {
+                    errors.add(new CsvImportReport.RowError(
+                            rowNumber,
+                            e.getMessage() == null
+                                    ? "Invalid CSV row"
+                                    : e.getMessage()
+                    ));
                 }
-
-                Instrument instrument = instrumentRepository
-                        .findBySymbolAndExchange(
-                                row.symbol(),
-                                row.exchange()
-                        )
-                                .orElseThrow(() -> new IllegalArgumentException(
-                                        "Instrument not found: "
-                                        + row.symbol()
-                                        + " on "
-                                        + row.exchange()
-                                ));
-
-                Execution execution = new Execution();
-
-                execution.setBrokerAccount(brokerAccount);
-                execution.setInstrument(instrument);
-                execution.setOrderId(row.orderId());
-                execution.setSide(
-                        ExecutionSide.valueOf(row.side())
-                );
-                execution.setQuantity(row.quantity());
-                execution.setPrice(row.price());
-                execution.setExecutedAt(row.executedAt());
-
-                Execution savedExecution = executionRepository.save(execution);
-
-                tradeReconstructionService.processExecution(savedExecution);
-
-                System.out.println(row);
             }
 
-        } catch(Exception e) {
-            e.printStackTrace();
-
+        } catch (Exception e) {
             throw new InvalidCsvException(
-                    "Failed to read CSV file",
-                    e
+                    "Failed to read CSV file: " + e.getMessage(), e
             );
         }
 
+        int importedRows = 0;
+
+        for (ValidatedRow validated : validRows) {
+
+            ExecutionCsvRow row = validated.row();
+
+            Execution execution = new Execution();
+            execution.setBrokerAccount(brokerAccount);
+            execution.setInstrument(validated.instrument());
+            execution.setOrderId(row.orderId());
+            execution.setSide(validated.side());
+            execution.setQuantity(row.quantity());
+            execution.setPrice(row.price());
+            execution.setExecutedAt(row.executedAt());
+
+            Execution savedExecution = executionRepository.save(execution);
+
+            tradeReconstructionService.processExecution(savedExecution);
+
+            importedRows++;
+
+        }
+
+        return new CsvImportReport(
+                totalRows,
+                importedRows,
+                skippedRows,
+                errors.size(),
+                errors
+        );
 
     }
+
+    private record ValidatedRow(
+            long rowNumber,
+            ExecutionCsvRow row,
+            Instrument instrument,
+            ExecutionSide side
+    ) { }
+
 }
