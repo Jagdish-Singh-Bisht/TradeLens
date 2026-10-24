@@ -6,10 +6,7 @@ import com.example.tradelens.entity.Instrument;
 import com.example.tradelens.entity.Trade;
 import com.example.tradelens.entity.User;
 import com.example.tradelens.entity.enums.InstrumentType;
-import com.example.tradelens.repository.BrokerAccountRepository;
-import com.example.tradelens.repository.InstrumentRepository;
-import com.example.tradelens.repository.TradeRepository;
-import com.example.tradelens.repository.UserRepository;
+import com.example.tradelens.repository.*;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +15,7 @@ import org.springframework.mock.web.MockMultipartFile;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -40,13 +38,20 @@ public class CsvImportServiceTest {
     @Autowired
     private TradeRepository tradeRepository;
 
+    @Autowired
+    private ExecutionRepository executionRepository;
+
     @Test
     void shouldSkipDuplicateExecutionsWhenSameCsvIsImportedTwice() {
 
+        String username = "csv-import-test-" + UUID.randomUUID();
+
         User user = new User();
-        user.setUsername("csv-import-test");
-        user.setEmail("csv-import@test.com");
+        user.setUsername(username);
+        user.setEmail(username + "@test.com");
         user.setPassword("test123");
+
+        user = userRepository.save(user);
 
         user = userRepository.save(user);
 
@@ -82,7 +87,8 @@ public class CsvImportServiceTest {
 
         csvImportService.importExecutions(
                 brokerAccount.getId(),
-                file
+                file,
+                username
         );
 
         List<Trade> tradesAfterFirstImport =
@@ -90,15 +96,26 @@ public class CsvImportServiceTest {
 
         assertEquals(1, tradesAfterFirstImport.size());
 
+        assertEquals(
+                2,
+                executionRepository.findByBrokerAccount(brokerAccount).size()
+        );
+
         csvImportService.importExecutions(
                 brokerAccount.getId(),
-                file
+                file,
+                username
         );
 
         List<Trade> tradesAfterSecondImport =
                 tradeRepository.findByBrokerAccount(brokerAccount);
 
         assertEquals(1, tradesAfterSecondImport.size());
+
+        assertEquals(
+                2,
+                executionRepository.findByBrokerAccount(brokerAccount).size()
+        );
 
     }
 

@@ -2,15 +2,7 @@ package com.example.tradelens.entity;
 
 
 import com.example.tradelens.entity.enums.ExecutionSide;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Column;
+import jakarta.persistence.*;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -25,7 +17,15 @@ import java.time.LocalDateTime;
 
 
 @Entity
-@Table(name = "executions")
+@Table(
+        name = "executions",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_execution_account_order",
+                        columnNames = { "broker_account_id", "order_id" }
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -42,7 +42,7 @@ public class Execution {
     @ManyToOne
     private Instrument instrument;
 
-    @Column(unique = true, nullable = false)
+    @Column(name = "order_id", nullable = false)
     private String orderId;
 
     @Enumerated(EnumType.STRING)

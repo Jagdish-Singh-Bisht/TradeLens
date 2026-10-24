@@ -46,10 +46,11 @@ class DecisionVsActualServiceTest {
 
         trade.setDecision(decision);
 
-        when(tradeRepository.findById(1L))
-                .thenReturn(Optional.of(trade));
+        when(tradeRepository.findByIdAndBrokerAccount_User_Username(
+                1L, "test-username"
+        )).thenReturn(Optional.of(trade));
 
-        var response = decisionVsActualService.analyze(1L);
+        var response = decisionVsActualService.analyze(1L, "test-username");
 
         assertEquals(new BigDecimal("1400.00"), response.plannedEntry());
         assertEquals(new BigDecimal("1405.00"), response.actualEntry());
@@ -82,10 +83,11 @@ class DecisionVsActualServiceTest {
 
         trade.setDecision(decision);
 
-        when(tradeRepository.findById(1L))
-                .thenReturn(Optional.of(trade));
+        when(tradeRepository.findByIdAndBrokerAccount_User_Username(
+                1L, "test-username"
+        )).thenReturn(Optional.of(trade));
 
-        var response = decisionVsActualService.analyze(1L);
+        var response = decisionVsActualService.analyze(1L, "test-username");
 
         assertTrue(response.targetAchieved());
         assertFalse(response.stopLossHit());
@@ -107,10 +109,11 @@ class DecisionVsActualServiceTest {
 
         trade.setDecision(decision);
 
-        when(tradeRepository.findById(1L))
-                .thenReturn(Optional.of(trade));
+        when(tradeRepository.findByIdAndBrokerAccount_User_Username(
+                1L, "test-username"
+        )).thenReturn(Optional.of(trade));
 
-        var response = decisionVsActualService.analyze(1L);
+        var response = decisionVsActualService.analyze(1L, "test-username");
 
         assertFalse(response.targetAchieved());
         assertTrue(response.stopLossHit());

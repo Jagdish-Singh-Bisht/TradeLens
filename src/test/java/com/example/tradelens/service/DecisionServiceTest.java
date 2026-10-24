@@ -59,11 +59,15 @@ class DecisionServiceTest {
         brokerAccount.setUser(user);
         brokerAccount = brokerAccountRepository.save(brokerAccount);
 
-        Instrument instrument = new Instrument();
-        instrument.setSymbol("RELIANCE");
-        instrument.setExchange("NSE");
-        instrument.setType(InstrumentType.EQUITY);
-        instrument = instrumentRepository.save(instrument);
+        Instrument instrument = instrumentRepository
+                .findBySymbolAndExchange("RELIANCE", "NSE")
+                .orElseGet(() -> {
+                    Instrument newInstrument = new Instrument();
+                    newInstrument.setSymbol("RELIANCE");
+                    newInstrument.setExchange("NSE");
+                    newInstrument.setType(InstrumentType.EQUITY);
+                    return instrumentRepository.save(newInstrument);
+                });
 
         Trade trade = new Trade();
 
@@ -86,7 +90,7 @@ class DecisionServiceTest {
         decision.setEntryReason("Breakout above resistance");
         decision.setExitReason("Took profit early");
 
-        decisionService.createDecision(trade.getId(), decision);
+        decisionService.createDecision(trade.getId(), "testuser", decision);
 
         Trade savedTrade = tradeRepository.findById(trade.getId())
                 .orElseThrow();
@@ -118,7 +122,7 @@ class DecisionServiceTest {
 
         assertThrows(
                 IllegalArgumentException.class,
-                () -> decisionService.createDecision(999999L, decision)
+                () -> decisionService.createDecision(999999L, "testuser", decision)
         );
     }
 }

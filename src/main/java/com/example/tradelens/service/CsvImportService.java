@@ -75,6 +75,8 @@ public class CsvImportService {
                             "Broker account not found"
                     ));
 
+
+
             for (CSVRecord record : parser) {
 
                 ExecutionCsvRow row = new ExecutionCsvRow(
@@ -87,7 +89,9 @@ public class CsvImportService {
                         LocalDateTime.parse(record.get("executed_at"))
                 );
 
-                if(executionRepository.findByOrderId(row.orderId()).isPresent()) {
+                if (executionRepository
+                        .findByBrokerAccountAndOrderId(brokerAccount, row.orderId())
+                        .isPresent()) {
                     System.out.println("Skipping duplicate order: " + row.orderId());
                     continue;
                 }

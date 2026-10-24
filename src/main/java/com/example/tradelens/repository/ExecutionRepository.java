@@ -13,4 +13,8 @@ public interface ExecutionRepository extends JpaRepository<Execution, Long>{
 
     Optional<Execution> findByOrderId(String orderId);
 
+    Optional<Execution> findByBrokerAccountAndOrderId(
+            BrokerAccount brokerAccount,
+            String orderId
+    );
 }
