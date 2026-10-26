@@ -184,6 +184,11 @@ public class CsvImportService {
             execution.setPrice(row.price());
             execution.setExecutedAt(row.executedAt());
 
+            tradeReconstructionService.ensurePositionsInitialized(
+                    brokerAccount,
+                    validated.instrument().getId()
+            );
+
             Execution savedExecution = executionRepository.save(execution);
 
             tradeReconstructionService.processExecution(savedExecution);
