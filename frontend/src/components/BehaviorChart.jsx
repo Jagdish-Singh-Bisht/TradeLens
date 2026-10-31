@@ -12,39 +12,28 @@ import {
 
 import './PnlChart.css'
 
-function BehaviorChart() {
+function BehaviorChart({brokerAccountId}) {
 
     const [data, setData] = useState([])
 
 
     useEffect(() => {
+        if (!brokerAccountId) {
+            setData([]);
+            return;
+        }
+
         async function loadBehavior() {
             try {
-                const accountsResponse = await fetch(
-                    'http://localhost:8080/api/broker-accounts',
-                    { credentials: 'include' }
-                );
-
-                if (!accountsResponse.ok) {
-                    throw new Error(`Failed to load accounts: HTTP ${accountsResponse.status}`);
-                }
-
-                const accounts = await accountsResponse.json();
-
-                if (!Array.isArray(accounts) || accounts.length === 0) {
-                    setData([]);
-                    return;
-                }
-
-                const accountId = accounts[0].id;
-
                 const response = await fetch(
-                    `http://localhost:8080/api/analytics/behavior/${accountId}`,
+                    `http://localhost:8080/api/analytics/behavior/${brokerAccountId}`,
                     { credentials: 'include' }
                 );
 
                 if (!response.ok) {
-                    throw new Error(`Failed to load behavior: HTTP ${response.status}`);
+                    throw new Error(
+                        `Failed to load behavior: HTTP ${response.status}`
+                    );
                 }
 
                 const result = await response.json();
@@ -55,13 +44,15 @@ function BehaviorChart() {
                     { behavior: 'Stop Loss Hits', count: Number(result.stopLossHits ?? 0) },
                     { behavior: 'Target Hits', count: Number(result.targetHits ?? 0) }
                 ]);
+
             } catch (error) {
                 console.error('Error loading behavior chart:', error);
+                setData([]);
             }
         }
 
         loadBehavior();
-    }, []);
+    }, [brokerAccountId]);
 
 
     if (data === null) {
