@@ -161,7 +161,7 @@ function Dashboard() {
 
             <section className="dashboard-section">
                 <div className="dashboard-section-header">
-                    <h3>Performance</h3>
+                    <h3>Performance Overview</h3>
                 </div>
 
                 <div className="dashboard-cards">
@@ -170,6 +170,7 @@ function Dashboard() {
                             key={card.title}
                             title={card.title}
                             value={card.value}
+                            type={card.type}
                         />
                     ))}
                 </div>
@@ -180,47 +181,53 @@ function Dashboard() {
             </section>
 
             <section className="dashboard-section">
-                <TradePnlChart />
-            </section>
-
-            <section className="dashboard-section">
                 <div className="dashboard-section-header">
-                    <h3>Strategy Performance</h3>
+                    <h3>Trade & Strategy Analysis</h3>
                 </div>
 
-                {strategies.length === 0 ? (
-                    <div className="dashboard-empty">
-                        <p>No strategy data available.</p>
-                    </div>
-                ) : (
-                    <div className="dashboard-table-card">
-                        <table className="dashboard-table">
-                            <thead>
-                            <tr>
-                                <th>Strategy</th>
-                                <th>Total Trades</th>
-                                <th>Win Rate</th>
-                                <th>P&L</th>
-                                <th>Profit Factor</th>
-                            </tr>
-                            </thead>
+                <div className="dashboard-analysis-grid">
+                    <TradePnlChart />
+                    <StrategyChart />
+                </div>
 
-                            <tbody>
-                            {strategies.map((strategy, index) => (
-                                <tr key={strategy.strategy ?? index}>
-                                    <td>{strategy.strategy}</td>
-                                    <td>{strategy.analytics.totalTrades}</td>
-                                    <td>{strategy.analytics.winRate}%</td>
-                                    <td>Rs.{strategy.analytics.totalProfitLoss}</td>
-                                    <td>{strategy.analytics.profitFactor ?? '-'}</td>
+                <div className="dashboard-subsection">
+                    <div className="dashboard-section-header">
+                        <h3>Strategy Performance Details</h3>
+                    </div>
+
+                    {strategies.length === 0 ? (
+                        <div className="dashboard-empty">
+                            <p>No strategy data available.</p>
+                        </div>
+                    ) : (
+                        <div className="dashboard-table-card">
+                            <table className="dashboard-table">
+                                <thead>
+                                <tr>
+                                    <th>Strategy</th>
+                                    <th>Total Trades</th>
+                                    <th>Win Rate</th>
+                                    <th>P&L</th>
+                                    <th>Profit Factor</th>
                                 </tr>
-                            ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                                </thead>
 
-                <StrategyChart />
+                                <tbody>
+                                    {strategies.map((strategy, index) => (
+                                        <tr key={strategy.strategy ?? index}>
+                                            <td>{strategy.strategy}</td>
+                                            <td>{strategy.analytics.totalTrades}</td>
+                                            <td>{strategy.analytics.winRate}%</td>
+                                            <td>Rs.{strategy.analytics.totalProfitLoss}</td>
+                                            <td>{strategy.analytics.profitFactor ?? '-'}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                </div>
             </section>
 
             <section className="dashboard-section">
@@ -228,9 +235,9 @@ function Dashboard() {
                     <h3>Trading Behavior</h3>
                 </div>
 
-                <div className="dashboard-cards">
+                <div className="dashboard-cards dashboard-behavior-cards">
                     <SummaryCard
-                        title="Total Trades"
+                        title="Trades with Decisions"
                         value={behavior.totalTrades}
                     />
                     <SummaryCard
