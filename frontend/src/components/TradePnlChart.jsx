@@ -13,34 +13,19 @@ import {
 
 import './PnlChart.css'
 
-function TradePnlChart() {
+function TradePnlChart({brokerAccountId}) {
 
     const [data, setData] = useState([])
 
 
     useEffect(() => {
+        if (!brokerAccountId) {
+            setData([]);
+            return;
+        }
+
         async function loadTradePnl() {
             try {
-                const accountsResponse = await fetch(
-                    'http://localhost:8080/api/broker-accounts',
-                    { credentials: 'include' }
-                );
-
-                if (!accountsResponse.ok) {
-                    throw new Error(
-                        `Failed to load accounts: HTTP ${accountsResponse.status}`
-                    );
-                }
-
-                const accounts = await accountsResponse.json();
-
-                if (!Array.isArray(accounts) || accounts.length === 0) {
-                    setData([]);
-                    return;
-                }
-
-                const brokerAccountId = accounts[0].id;
-
                 const response = await fetch(
                     `http://localhost:8080/api/broker-accounts/${brokerAccountId}/analytics/pnl-trend`,
                     { credentials: 'include' }
@@ -59,13 +44,15 @@ function TradePnlChart() {
                 }
 
                 setData(result);
+
             } catch (error) {
                 console.error('Error loading trade P&L:', error);
+                setData([]);
             }
         }
 
         loadTradePnl();
-    }, []);
+    }, [brokerAccountId]);
 
 
     return (

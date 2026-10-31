@@ -14,87 +14,149 @@ function Dashboard() {
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
     const [refreshKey, setRefreshKey] = useState(0);
+    const [accounts, setAccounts] = useState([]);
+    const [selectedBrokerAccountId, setSelectedBrokerAccountId] = useState(
+        () => localStorage.getItem('tradelens.selectedBrokerAccountId') || ''
+    );
 
     useEffect(() => {
+        if (selectedBrokerAccountId) {
+            localStorage.setItem(
+                'tradelens.selectedBrokerAccountId',
+                String(selectedBrokerAccountId)
+            );
+        }
+    }, [selectedBrokerAccountId]);
+
+    useEffect(() => {
+        async function loadAccounts() {
+            try {
+                const response = await fetch(
+                    'http://localhost:8080/api/broker-accounts',
+                    {
+                        credentials: 'include'
+                    }
+                );
+
+                if(!response.ok) {
+                    throw new Error(`Could not load broker accounts: HTTP ${response.status}`);
+                }
+
+                const result = await response.json();
+
+                console.log('Broker accounts: ', result);
+
+                if(!Array.isArray(result)) {
+                    throw new Error('Broker accounts API did not return a list.');
+                }
+
+                setAccounts(result);
+
+                if(result.length === 0) {
+                    setSelectedBrokerAccountId('');
+                    setError('NO_BROKER_ACCOUNT');
+                    setAnalytics(null);
+                    setStrategies(null);
+                    setBehavior(null);
+                    setLoading(false);
+
+                    return;
+                }
+
+                setSelectedBrokerAccountId(previousId => {
+                    const existingAccount = result.find(
+                        account => String(account.id) === String(previousId)
+                    );
+
+                    return existingAccount
+                        ? String(existingAccount.id)
+                        : String(result[0].id);
+                });
+
+            } catch (err) {
+                console.error('Error loading broker accounts: ', err);
+                setError(err.message || 'Unable to load broker accounts.');
+                setLoading(false);
+            }
+
+        }
+
+        loadAccounts();
+    }, [refreshKey])
+
+    useEffect(() => {
+        if(!selectedBrokerAccountId) return;
+
+        let cancelled = false;
+
         async function loadDashboard() {
             try {
                 setLoading(true);
                 setError(null);
 
-                // Step 1: Fetch this user's broker accounts
-                const accountsResponse = await fetch(
-                    'http://localhost:8080/api/broker-accounts',
-                    { credentials: 'include' }
-                );
-
-                if (!accountsResponse.ok) {
-                    throw new Error(
-                        `Could not load broker accounts: HTTP ${accountsResponse.status}`
-                    );
-                }
-
-                const accounts = await accountsResponse.json();
-
-                if (!Array.isArray(accounts)) {
-                    throw new Error('Broker accounts API did not return a list.');
-                }
-
-                if (accounts.length === 0) {
-                    setAnalytics(null);
-                    setStrategies(null);
-                    setBehavior(null);
-                    setError('NO_BROKER_ACCOUNT');
-                    return;
-                }
-
-                const brokerAccountId = accounts[0].id;
-
                 const urls = [
-                    `http://localhost:8080/api/broker-accounts/${brokerAccountId}/analytics`,
-                    `http://localhost:8080/api/analytics/strategies/${brokerAccountId}`,
-                    `http://localhost:8080/api/analytics/behavior/${brokerAccountId}`
-                ];
+                    `http://localhost:8080/api/broker-accounts/${selectedBrokerAccountId}/analytics`,
+                    `http://localhost:8080/api/analytics/strategies/${selectedBrokerAccountId}`,
+                    `http://localhost:8080/api/analytics/behavior/${selectedBrokerAccountId}`
+                ]
 
                 const responses = await Promise.all(
                     urls.map(url =>
                         fetch(url, { credentials: 'include' })
                     )
-                );
+                )
 
-                const failedResponse = responses.find(
-                    response => !response.ok
-                );
+                const failedResponse = responses.find(response => !response.ok)
 
-                if (failedResponse) {
-                    throw new Error(
-                        `Dashboard API failed: HTTP ${failedResponse.status}`
-                    );
+                if(failedResponse) {
+                    throw new Error(`Dashboard API failed: HTTP ${failedResponse.status}`);
                 }
 
-                const [analyticsData, strategiesData, behaviorData] = await Promise.all(
-                    responses.map(response => response.json())
-                );
+                const [analyticsData, strategiesData, behaviorData] =
+                    await Promise.all(responses.map(response => response.json()));
 
-                if (!Array.isArray(strategiesData)) {
-                    throw new Error(
-                        'Expected the strategies API to return a list.'
-                    );
+                if(!Array.isArray(strategiesData)) {
+                    throw new Error('Expected the strategies API to return a list.');
                 }
 
-                setAnalytics(analyticsData);
+                if (cancelled) return;
+
+                setAnalytics(analyticsData ?? {
+                    totalProfitLoss: 0,
+                    winRate: 0,
+                    totalTrades: 0,
+                    profitFactor: null
+                });
+
                 setStrategies(strategiesData);
-                setBehavior(behaviorData);
+
+                setBehavior(behaviorData ?? {
+                    totalTrades: 0,
+                    earlyExits: 0,
+                    lateEntries: 0,
+                    stopLossHits: 0,
+                    targetHits: 0
+                });
 
             } catch (err) {
-                console.error('Error loading dashboard:', err);
-                setError(err.message || 'Unable to load dashboard.');
+                if (!cancelled) {
+                    console.error('Error loading dashboard:', err);
+                    setError(err.message || 'Unable to load dashboard.');
+                }
             } finally {
-                setLoading(false);
+                if (!cancelled) {
+                    setLoading(false);
+                }
             }
         }
 
         loadDashboard();
-    }, [refreshKey]);
+
+        return () => {
+            cancelled = true;
+        }
+
+    }, [selectedBrokerAccountId]);
 
     if (loading) {
         return (
@@ -111,6 +173,26 @@ function Dashboard() {
                 <div className="dashboard-heading">
                     <h2>Trading Overview</h2>
                     <p>Review your overall trading performance.</p>
+                </div>
+
+                <div className="dashboard-account-selector">
+                    <label htmlFor="brokerAccount">
+                        Broker Account
+                    </label>
+
+                    <select
+                        id="brokerAccount"
+                        value={selectedBrokerAccountId}
+                        onChange={event =>
+                            setSelectedBrokerAccountId(event.target.value)
+                        }
+                    >
+                        {accounts.map(account => (
+                            <option key={account.id} value={String(account.id)} >
+                                {account.brokerName} - {account.accountName} (ID: {account.id})
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
                 {error === 'NO_BROKER_ACCOUNT' ? (
@@ -159,6 +241,26 @@ function Dashboard() {
                 <p>Review your overall trading performance.</p>
             </div>
 
+            <div className="dashboard-account-selector">
+                <label htmlFor="brokerAccount">
+                    Broker Account
+                </label>
+
+                <select
+                    id="brokerAccount"
+                    value={selectedBrokerAccountId}
+                    onChange={event =>
+                        setSelectedBrokerAccountId(event.target.value)
+                    }
+                >
+                    {accounts.map(account => (
+                        <option key={account.id} value={String(account.id)}>
+                            {account.brokerName} - {account.accountName} (ID: {account.id})
+                        </option>
+                    ))}
+                </select>
+            </div>
+
             <section className="dashboard-section">
                 <div className="dashboard-section-header">
                     <h3>Performance Overview</h3>
@@ -177,7 +279,7 @@ function Dashboard() {
             </section>
 
             <section className="dashboard-section">
-                <PnlChart />
+                <PnlChart brokerAccountId={selectedBrokerAccountId} />
             </section>
 
             <section className="dashboard-section">
@@ -186,8 +288,8 @@ function Dashboard() {
                 </div>
 
                 <div className="dashboard-analysis-grid">
-                    <TradePnlChart />
-                    <StrategyChart />
+                    <TradePnlChart brokerAccountId={selectedBrokerAccountId} />
+                    <StrategyChart brokerAccountId={selectedBrokerAccountId} />
                 </div>
 
                 <div className="dashboard-subsection">
@@ -258,7 +360,7 @@ function Dashboard() {
                     />
                 </div>
 
-                <BehaviorChart />
+                <BehaviorChart brokerAccountId={selectedBrokerAccountId} />
             </section>
         </main>
     );

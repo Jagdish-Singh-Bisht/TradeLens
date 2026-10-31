@@ -12,39 +12,28 @@ import {
 
 import './PnlChart.css'
 
-function StrategyChart() {
+function StrategyChart({brokerAccountId}) {
 
     const [data, setData] = useState([])
 
 
     useEffect(() => {
+        if (!brokerAccountId) {
+            setData([]);
+            return;
+        }
+
         async function loadStrategies() {
             try {
-                const accountsResponse = await fetch(
-                    'http://localhost:8080/api/broker-accounts',
-                    { credentials: 'include' }
-                );
-
-                if (!accountsResponse.ok) {
-                    throw new Error(`Failed to load accounts: HTTP ${accountsResponse.status}`);
-                }
-
-                const accounts = await accountsResponse.json();
-
-                if (!Array.isArray(accounts) || accounts.length === 0) {
-                    setData([]);
-                    return;
-                }
-
-                const accountId = accounts[0].id;
-
                 const response = await fetch(
-                    `http://localhost:8080/api/analytics/strategies/${accountId}`,
+                    `http://localhost:8080/api/analytics/strategies/${brokerAccountId}`,
                     { credentials: 'include' }
                 );
 
                 if (!response.ok) {
-                    throw new Error(`Failed to load strategies: HTTP ${response.status}`);
+                    throw new Error(
+                        `Failed to load strategies: HTTP ${response.status}`
+                    );
                 }
 
                 const result = await response.json();
@@ -59,13 +48,15 @@ function StrategyChart() {
                     totalTrades: item.analytics.totalTrades,
                     winRate: Number(item.analytics.winRate ?? 0)
                 })));
+
             } catch (error) {
                 console.error('Error loading strategy chart:', error);
+                setData([]);
             }
         }
 
         loadStrategies();
-    }, []);
+    }, [brokerAccountId]);
 
 
     return (
