@@ -1,5 +1,7 @@
+import { useBrokerAccount } from '../context/BrokerAccountContext';
 import './Trades.css'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState} from 'react'
+
 
 function Trades({ onSelectTrade, role }) {
     const [trades, setTrades] = useState([])
@@ -16,42 +18,38 @@ function Trades({ onSelectTrade, role }) {
     const [importing, setImporting] = useState(false)
     const [message, setMessage] = useState('')
     const [error, setError] = useState('')
-    const [brokerAccountId, setBrokerAccountId] = useState(null);
 
-    const loadTrades = async () => {
+    const {
+        selectedBrokerAccountId,
+        loading: accountsLoading,
+        error: accountsError
+    } = useBrokerAccount();
+
+    const tradesRequestId = useRef(0)
+
+    const loadTrades = useCallback(async () => {
+
+        const requestId = ++tradesRequestId.current;
+
+        if(!selectedBrokerAccountId) {
+            setTrades([]);
+            setError('No broker account found. Create an account first.');
+            setLoading(false);
+
+            return;
+        }
+
         setLoading(true)
         setError('')
 
         try {
-            const accountsResponse = await fetch(
-                'http://localhost:8080/api/broker-accounts',
-                { credentials: 'include' }
-            );
-
-            if (!accountsResponse.ok) {
-                throw new Error(
-                    `Failed to load broker accounts: HTTP ${accountsResponse.status}`
-                );
-            }
-
-            const accounts = await accountsResponse.json()
-
-            if (!Array.isArray(accounts) || accounts.length === 0) {
-                setBrokerAccountId(null);
-                setTrades([]);
-                setError('No broker account found. Create an account first.');
-                return;
-            }
-
-            const accountId = accounts[0].id;
-            setBrokerAccountId(accountId);
-
             const tradesResponse = await fetch(
-                `http://localhost:8080/api/trades/broker-account/${accountId}`,
+                `http://localhost:8080/api/trades/broker-account/${selectedBrokerAccountId}`,
                 { credentials: 'include' }
             );
 
             if (!tradesResponse.ok) {
+
                 const message = await tradesResponse.text();
 
                 throw new Error(
@@ -59,25 +57,55 @@ function Trades({ onSelectTrade, role }) {
                 );
             }
 
-            const tradesData = await tradesResponse.json();
+            const tradesData = await tradesResponse.json()
 
             if (!Array.isArray(tradesData)) {
-                throw new Error('Unexpected response from server.');
+                throw new Error('Unexpected response from server.')
+            }
+
+            if (requestId !== tradesRequestId.current) {
+                return;
             }
 
             setTrades(tradesData);
 
         } catch (err) {
+            if (requestId !== tradesRequestId.current) {
+                return;
+            }
+
             console.error('Error loading trades: ', err);
             setError(err.message || 'Unable to load trades.')
         } finally {
-            setLoading(false)
+            if (requestId === tradesRequestId.current) {
+                setLoading(false);
+            }
         }
-    }
+
+    }, [selectedBrokerAccountId]);
 
     useEffect(() => {
+        if(accountsLoading) return;
+
+        if(accountsError) {
+            setTrades([]);
+            setError(accountsError);
+            setLoading(false);
+
+            return;
+        }
+
+        if(!selectedBrokerAccountId) {
+            setTrades([]);
+            setError('No broker account found. Create an account first.');
+            setLoading(false);
+
+            return;
+        }
+
         loadTrades()
-    }, [])
+
+    }, [accountsLoading, accountsError, loadTrades]);
 
     const handleFileChange = (event) => {
         setFile(event.target.files[0] || null)
@@ -108,13 +136,13 @@ function Trades({ onSelectTrade, role }) {
             const csrfData = await csrfResponse.json()
             const formData = new FormData()
 
-            if (!brokerAccountId) {
+            if (!selectedBrokerAccountId) {
                 throw new Error(
                     'Create a broker account before importing executions.'
                 );
             }
 
-            formData.append('brokerAccountId', String(brokerAccountId));
+            formData.append('brokerAccountId', String(selectedBrokerAccountId));
 
             formData.append('file', file)
 

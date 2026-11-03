@@ -24,6 +24,10 @@ function TradePnlChart({brokerAccountId}) {
             return;
         }
 
+        let cancelled = false;
+
+        setData([]);
+
         async function loadTradePnl() {
             try {
                 const response = await fetch(
@@ -43,15 +47,24 @@ function TradePnlChart({brokerAccountId}) {
                     throw new Error('Expected P&L data to be a list.');
                 }
 
-                setData(result);
+                if(!cancelled) {
+                    setData(result);
+                }
 
             } catch (error) {
-                console.error('Error loading trade P&L:', error);
-                setData([]);
+                if(!cancelled) {
+                    console.error('Error loading trade P&L:', error);
+                    setData([]);
+                }
             }
         }
 
         loadTradePnl();
+
+        return () => {
+            cancelled = true;
+        };
+
     }, [brokerAccountId]);
 
 

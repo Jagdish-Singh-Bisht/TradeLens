@@ -23,6 +23,9 @@ function BehaviorChart({brokerAccountId}) {
             return;
         }
 
+        let cancelled = false;
+        setData([]);
+
         async function loadBehavior() {
             try {
                 const response = await fetch(
@@ -38,20 +41,29 @@ function BehaviorChart({brokerAccountId}) {
 
                 const result = await response.json();
 
-                setData([
-                    { behavior: 'Early Exits', count: Number(result.earlyExits ?? 0) },
-                    { behavior: 'Late Entries', count: Number(result.lateEntries ?? 0) },
-                    { behavior: 'Stop Loss Hits', count: Number(result.stopLossHits ?? 0) },
-                    { behavior: 'Target Hits', count: Number(result.targetHits ?? 0) }
-                ]);
+                if(!cancelled) {
+                    setData([
+                        { behavior: 'Early Exits', count: Number(result.earlyExits ?? 0) },
+                        { behavior: 'Late Entries', count: Number(result.lateEntries ?? 0) },
+                        { behavior: 'Stop Loss Hits', count: Number(result.stopLossHits ?? 0) },
+                        { behavior: 'Target Hits', count: Number(result.targetHits ?? 0) }
+                    ]);
+                }
 
             } catch (error) {
-                console.error('Error loading behavior chart:', error);
-                setData([]);
+                if(!cancelled) {
+                    console.error('Error loading behavior chart:', error);
+                    setData([]);
+                }
             }
         }
 
         loadBehavior();
+
+        return () => {
+            cancelled = true;
+        };
+
     }, [brokerAccountId]);
 
 

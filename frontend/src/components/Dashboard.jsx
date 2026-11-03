@@ -7,6 +7,9 @@ import { useEffect, useState } from 'react';
 import SummaryCard from './SummaryCard';
 import './Dashboard.css';
 
+import { useBrokerAccount} from '../context/BrokerAccountContext';
+
+
 function Dashboard() {
     const [analytics, setAnalytics] = useState(null);
     const [strategies, setStrategies] = useState(null);
@@ -14,75 +17,15 @@ function Dashboard() {
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
     const [refreshKey, setRefreshKey] = useState(0);
-    const [accounts, setAccounts] = useState([]);
-    const [selectedBrokerAccountId, setSelectedBrokerAccountId] = useState(
-        () => localStorage.getItem('tradelens.selectedBrokerAccountId') || ''
-    );
 
-    useEffect(() => {
-        if (selectedBrokerAccountId) {
-            localStorage.setItem(
-                'tradelens.selectedBrokerAccountId',
-                String(selectedBrokerAccountId)
-            );
-        }
-    }, [selectedBrokerAccountId]);
-
-    useEffect(() => {
-        async function loadAccounts() {
-            try {
-                const response = await fetch(
-                    'http://localhost:8080/api/broker-accounts',
-                    {
-                        credentials: 'include'
-                    }
-                );
-
-                if(!response.ok) {
-                    throw new Error(`Could not load broker accounts: HTTP ${response.status}`);
-                }
-
-                const result = await response.json();
-
-                console.log('Broker accounts: ', result);
-
-                if(!Array.isArray(result)) {
-                    throw new Error('Broker accounts API did not return a list.');
-                }
-
-                setAccounts(result);
-
-                if(result.length === 0) {
-                    setSelectedBrokerAccountId('');
-                    setError('NO_BROKER_ACCOUNT');
-                    setAnalytics(null);
-                    setStrategies(null);
-                    setBehavior(null);
-                    setLoading(false);
-
-                    return;
-                }
-
-                setSelectedBrokerAccountId(previousId => {
-                    const existingAccount = result.find(
-                        account => String(account.id) === String(previousId)
-                    );
-
-                    return existingAccount
-                        ? String(existingAccount.id)
-                        : String(result[0].id);
-                });
-
-            } catch (err) {
-                console.error('Error loading broker accounts: ', err);
-                setError(err.message || 'Unable to load broker accounts.');
-                setLoading(false);
-            }
-
-        }
-
-        loadAccounts();
-    }, [refreshKey])
+    const {
+        accounts,
+        selectedBrokerAccountId,
+        selectBrokerAccount,
+        loading: accountsLoading,
+        error: accountsError,
+        refreshAccounts
+    } = useBrokerAccount();
 
     useEffect(() => {
         if(!selectedBrokerAccountId) return;
@@ -156,7 +99,45 @@ function Dashboard() {
             cancelled = true;
         }
 
-    }, [selectedBrokerAccountId]);
+    }, [selectedBrokerAccountId, refreshKey]);
+
+    if(accountsLoading) {
+        return (
+            <main className="dashboard">
+                <h2>Trading Overview</h2>
+                <p>Loading broker accounts...</p>
+            </main>
+        );
+    }
+
+    if(accountsError) {
+        return (
+            <main className="dashboard">
+                <div className="dashboard-empty">
+
+                    <p>{accountsError}</p>
+
+                    <button onClick={refreshAccounts}>
+                        Retry
+                    </button>
+
+                </div>
+            </main>
+        );
+    }
+
+    if(accounts.length === 0) {
+        return (
+            <main className="dashboard">
+                <div className="dashboard-heading">
+                    <h2>Trading Overview</h2>
+                    <p>Create a broker account to view trading performance.</p>
+                </div>
+
+                <BrokerAccountForm onCreated={refreshAccounts} />
+            </main>
+        );
+    }
 
     if (loading) {
         return (
@@ -175,41 +156,13 @@ function Dashboard() {
                     <p>Review your overall trading performance.</p>
                 </div>
 
-                <div className="dashboard-account-selector">
-                    <label htmlFor="brokerAccount">
-                        Broker Account
-                    </label>
+                <div className="dashboard-empty">
+                    <p>{error}</p>
 
-                    <select
-                        id="brokerAccount"
-                        value={selectedBrokerAccountId}
-                        onChange={event =>
-                            setSelectedBrokerAccountId(event.target.value)
-                        }
-                    >
-                        {accounts.map(account => (
-                            <option key={account.id} value={String(account.id)} >
-                                {account.brokerName} - {account.accountName} (ID: {account.id})
-                            </option>
-                        ))}
-                    </select>
+                    <button onClick={() => setRefreshKey(previous => previous + 1)}>
+                        Retry
+                    </button>
                 </div>
-
-                {error === 'NO_BROKER_ACCOUNT' ? (
-                    <BrokerAccountForm
-                        onCreated={() => {
-                            setError(null);
-                            setRefreshKey(previous => previous + 1);
-                        }}
-                    />
-                ) : (
-                    <div className="dashboard-empty">
-                        <p>{error}</p>
-                        <button onClick={() => setRefreshKey(previous => previous + 1)}>
-                            Retry
-                        </button>
-                    </div>
-                )}
             </main>
         );
     }
@@ -239,26 +192,6 @@ function Dashboard() {
             <div className="dashboard-heading">
                 <h2>Trading Overview</h2>
                 <p>Review your overall trading performance.</p>
-            </div>
-
-            <div className="dashboard-account-selector">
-                <label htmlFor="brokerAccount">
-                    Broker Account
-                </label>
-
-                <select
-                    id="brokerAccount"
-                    value={selectedBrokerAccountId}
-                    onChange={event =>
-                        setSelectedBrokerAccountId(event.target.value)
-                    }
-                >
-                    {accounts.map(account => (
-                        <option key={account.id} value={String(account.id)}>
-                            {account.brokerName} - {account.accountName} (ID: {account.id})
-                        </option>
-                    ))}
-                </select>
             </div>
 
             <section className="dashboard-section">

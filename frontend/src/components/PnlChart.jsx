@@ -24,6 +24,9 @@ function PnlChart({brokerAccountId}) {
             return;
         }
 
+        let cancelled = false;
+        setData([]);
+
         async function loadPnlTrend() {
             try {
                 const response = await fetch(
@@ -43,15 +46,24 @@ function PnlChart({brokerAccountId}) {
                     throw new Error('Expected P&L trend data to be a list.');
                 }
 
-                setData(result);
+                if (!cancelled) {
+                    setData(result);
+                }
 
             } catch (error) {
-                console.error('Error loading P&L trend:', error);
-                setData([]);
+                if (!cancelled) {
+                    console.error('Error loading P&L trend:', error);
+                    setData([]);
+                }
             }
         }
 
         loadPnlTrend();
+
+        return () => {
+            cancelled = true;
+        };
+
     }, [brokerAccountId]);
 
 
