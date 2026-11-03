@@ -11,45 +11,46 @@ import {
     Tooltip
 } from 'recharts'
 
+import { useBrokerAccount } from '../context/BrokerAccountContext'
+
 function Strategies() {
+
+    const {
+        selectedBrokerAccountId,
+        loading: accountsLoading,
+        error: accountsError
+    } = useBrokerAccount()
+
     const [strategies, setStrategies] = useState(null)
     const [error, setError] = useState('')
 
 
     useEffect(() => {
+
+        if(accountsLoading) return;
+
+        if(accountsError) {
+            setStrategies([]);
+            setError(accountsError);
+            return;
+        }
+
+        if(!selectedBrokerAccountId) {
+            setStrategies([]);
+            setError('No broker account selected.');
+            return;
+        }
+
+        let cancelled = false;
+
         async function loadStrategies() {
+
             try {
                 setError('');
-
-                // 1. Fetch the logged-in user's broker accounts
-                const accountsResponse = await fetch(
-                    'http://localhost:8080/api/broker-accounts',
-                    { credentials: 'include' }
-                );
-
-                if (!accountsResponse.ok) {
-                    throw new Error(
-                        `Failed to load broker accounts: HTTP ${accountsResponse.status}`
-                    );
-                }
-
-                const accounts = await accountsResponse.json();
-
-                if (!Array.isArray(accounts)) {
-                    throw new Error('Invalid broker accounts response.');
-                }
-
-                if (accounts.length === 0) {
-                    setStrategies([]);
-                    setError('No broker account found. Create one to view strategy analytics.');
-                    return;
-                }
-
-                // 2. Use the actual account ID
-                const brokerAccountId = accounts[0].id;
+                setStrategies(null);
 
                 const response = await fetch(
-                    `http://localhost:8080/api/analytics/strategies/${brokerAccountId}`,
+                    `http://localhost:8080/api/analytics/strategies/${selectedBrokerAccountId}`,
                     { credentials: 'include' }
                 );
 
@@ -65,18 +66,53 @@ function Strategies() {
                     throw new Error('Invalid strategy analytics response.');
                 }
 
-                setStrategies(data);
+                if(!cancelled) {
+                    setStrategies(data);
+                }
 
             } catch (error) {
-                console.error('Error loading strategies:', error);
-                setError(error.message);
+                if(!cancelled) {
+                    console.error('Error loading strategies:', error);
+                    setError(error.message || 'Unable to load strategies.');
+                    setStrategies([]);
+                }
             }
         }
 
         loadStrategies();
 
-    }, []);
+        return () => {
+            cancelled = true;
+        };
 
+    }, [selectedBrokerAccountId, accountsLoading, accountsError]);
+
+    if (accountsLoading) {
+        return (
+            <main className="strategies">
+                <h2>Strategy Performance</h2>
+                <p>Loading broker accounts...</p>
+            </main>
+        );
+    }
+
+    if (accountsError) {
+        return (
+            <main className="strategies">
+                <h2>Strategy Performance</h2>
+                <p>{accountsError}</p>
+            </main>
+        );
+    }
+
+    if (!selectedBrokerAccountId) {
+        return (
+            <main className="strategies">
+                <h2>Strategy Performance</h2>
+                <p>No broker account selected.</p>
+            </main>
+        );
+    }
 
     if (error) {
         return (
@@ -121,16 +157,25 @@ function Strategies() {
                     </thead>
 
                     <tbody>
-                    {strategies.map(item => (
-                        <tr key={item.strategy}>
-                            <td>{item.strategy}</td>
-                            <td>{item.analytics.totalTrades}</td>
-                            <td>{item.analytics.winRate}%</td>
-                            <td>₹{item.analytics.totalProfitLoss}</td>
-                            <td>{item.analytics.profitFactor}</td>
-                        </tr>
-                    ))}
+                        {strategies.length === 0 ? (
+                            <tr>
+                                <td colSpan="5">
+                                    No strategy data available yet.
+                                </td>
+                            </tr>
+                        ) : (
+                            strategies.map(item => (
+                                <tr key={item.strategy}>
+                                    <td>{item.strategy}</td>
+                                    <td>{item.analytics.totalTrades}</td>
+                                    <td>{item.analytics.winRate}%</td>
+                                    <td>₹{item.analytics.totalProfitLoss}</td>
+                                    <td>{item.analytics.profitFactor}</td>
+                                </tr>
+                            ))
+                        )}
                     </tbody>
+
                 </table>
             </div>
 

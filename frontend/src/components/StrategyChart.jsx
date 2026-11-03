@@ -23,6 +23,9 @@ function StrategyChart({brokerAccountId}) {
             return;
         }
 
+        let cancelled = false;
+        setData([]);
+
         async function loadStrategies() {
             try {
                 const response = await fetch(
@@ -42,20 +45,29 @@ function StrategyChart({brokerAccountId}) {
                     throw new Error('Expected strategy analytics to be a list.');
                 }
 
-                setData(result.map(item => ({
-                    strategy: item.strategy,
-                    totalProfitLoss: Number(item.analytics.totalProfitLoss ?? 0),
-                    totalTrades: item.analytics.totalTrades,
-                    winRate: Number(item.analytics.winRate ?? 0)
-                })));
+                if(!cancelled) {
+                    setData(result.map(item => ({
+                        strategy: item.strategy,
+                        totalProfitLoss: Number(item.analytics.totalProfitLoss ?? 0),
+                        totalTrades: item.analytics.totalTrades,
+                        winRate: Number(item.analytics.winRate ?? 0)
+                    })));
+                }
 
             } catch (error) {
-                console.error('Error loading strategy chart:', error);
-                setData([]);
+                if(!cancelled) {
+                    console.error('Error loading strategy chart:', error);
+                    setData([]);
+                }
             }
         }
 
         loadStrategies();
+
+        return () => {
+            cancelled = true;
+        };
+
     }, [brokerAccountId]);
 
 

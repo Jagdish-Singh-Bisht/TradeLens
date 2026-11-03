@@ -1,37 +1,47 @@
+import { useBrokerAccount } from '../context/BrokerAccountContext';
 import './Analytics.css'
 import SummaryCard from './SummaryCard'
 import { useEffect, useState } from 'react'
 
 function Analytics() {
 
-    const [analytics, setAnalytics] = useState(null)
+    const {
+        selectedBrokerAccountId,
+        loading: accountsLoading,
+        error: accountsError
+    } = useBrokerAccount();
 
+    const [analytics, setAnalytics] = useState(null)
+    const [analyticsError, setAnalyticsError] = useState(null)
 
     useEffect(() => {
+
+        if(accountsLoading) return;
+
+        if(accountsError) {
+            setAnalytics(null);
+            setAnalyticsError(accountsError);
+
+            return;
+        }
+
+        if(!selectedBrokerAccountId) {
+            setAnalytics(null);
+            setAnalyticsError(null)
+
+            return;
+        }
+
+        let cancelled = false;
+
         async function loadAnalytics() {
+
             try {
-                const accountsResponse = await fetch(
-                    'http://localhost:8080/api/broker-accounts',
-                    { credentials: 'include' }
-                );
-
-                if (!accountsResponse.ok) {
-                    throw new Error(
-                        `Failed to load accounts: HTTP ${accountsResponse.status}`
-                    );
-                }
-
-                const accounts = await accountsResponse.json();
-
-                if (!Array.isArray(accounts) || accounts.length === 0) {
-                    setAnalytics(null);
-                    return;
-                }
-
-                const accountId = accounts[0].id;
+                setAnalytics(null)
+                setAnalyticsError(null)
 
                 const response = await fetch(
-                    `http://localhost:8080/api/broker-accounts/${accountId}/analytics`,
+                    `http://localhost:8080/api/broker-accounts/${selectedBrokerAccountId}/analytics`,
                     { credentials: 'include' }
                 );
 
@@ -42,21 +52,78 @@ function Analytics() {
                 }
 
                 const result = await response.json();
-                setAnalytics(result);
+
+                if(!cancelled) {
+                    setAnalytics(result ?? {
+                        totalTrades: 0,
+                        winRate: 0,
+                        totalProfitLoss: 0,
+                        profitFactor: null,
+                        averageProfit: 0,
+                        averageLoss: 0
+                    });
+                }
+
             } catch (error) {
-                console.error('Error loading analytics:', error);
+                if(!cancelled) {
+                    console.error('Error loading analytics:', error);
+                    setAnalyticsError(
+                        error.message || 'Unable to load analytics.'
+                    );
+                }
             }
         }
 
         loadAnalytics();
-    }, []);
+
+        return () => {
+            cancelled = true;
+        };
+
+    }, [selectedBrokerAccountId, accountsLoading, accountsError]);
 
 
+
+    if (accountsLoading) {
+        return (
+            <main className="analytics">
+                <h2>Trading Analytics</h2>
+                <p>Loading broker accounts...</p>
+            </main>
+        );
+    }
+
+    if (accountsError) {
+        return (
+            <main className="analytics">
+                <h2>Trading Analytics</h2>
+                <p>{accountsError}</p>
+            </main>
+        );
+    }
+
+    if (!selectedBrokerAccountId) {
+        return (
+            <main className="analytics">
+                <h2>Trading Analytics</h2>
+                <p>No broker account selected. Create or select a broker account.</p>
+            </main>
+        );
+    }
+
+    if (analyticsError) {
+        return (
+            <main className="analytics">
+                <h2>Trading Analytics</h2>
+                <p>{analyticsError}</p>
+            </main>
+        );
+    }
 
     if (!analytics) {
         return (
-            <main>
-                <h2>Analytics</h2>
+            <main className="analytics">
+                <h2>Trading Analytics</h2>
                 <p>Loading analytics...</p>
             </main>
         );
@@ -66,15 +133,10 @@ function Analytics() {
         return (
             <main className="analytics">
                 <h2>Trading Analytics</h2>
-                <p>
-                    {analytics.message === 'NO_BROKER_ACCOUNT'
-                        ? 'No broker account found. Analytics will be available after an account is created.'
-                        : analytics.message}
-                </p>
+                <p>{analytics.message}</p>
             </main>
         );
     }
-
 
     return (
 

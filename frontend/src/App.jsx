@@ -1,3 +1,4 @@
+import GlobalBrokerAccountSelector from './components/GlobalBrokerAccountSelector';
 import MarketContext from './components/MarketContext'
 import Behavior from "./components/Behavior.jsx";
 import Strategies from "./components/Strategies";
@@ -11,7 +12,6 @@ import Login from './components/Login'
 import Signup from "./components/Signup";
 import './App.css'
 
-
 import {useEffect, useState} from "react";
 
 import {
@@ -23,6 +23,10 @@ import {
     useLocation,
     useParams,
 } from 'react-router-dom'
+
+import { BrokerAccountProvider } from './context/BrokerAccountContext'
+
+
 
 function TradeDetailsPage() {
     const {tradeId} = useParams()
@@ -50,66 +54,72 @@ function ProtectedApp({ onLogout, role }) {
                     onLogout={onLogout}
                 />
 
-                <Routes>
-                    <Route
-                        path="/"
-                        element={<Navigate to="/dashboard" replace />}
-                    />
+                <div className="app-main-content">
 
-                    <Route
-                        path="/dashboard"
-                        element={<Dashboard />}
-                    />
+                    <GlobalBrokerAccountSelector />
 
-                    <Route
-                        path="/trades"
-                        element={
-                            <Trades
-                                role={role}
-                                onSelectTrade={(tradeId) => {
-                                    navigate(`/trades/${tradeId}`)
-                                }}
-                            />
-                        }
-                    />
+                    <Routes>
+                        <Route
+                            path="/"
+                            element={<Navigate to="/dashboard" replace />}
+                        />
 
-                    <Route
-                        path="/trades/:tradeId"
-                        element={<TradeDetailsPage/>}
-                    />
+                        <Route
+                            path="/dashboard"
+                            element={<Dashboard />}
+                        />
+
+                        <Route
+                            path="/trades"
+                            element={
+                                <Trades
+                                    role={role}
+                                    onSelectTrade={(tradeId) => {
+                                        navigate(`/trades/${tradeId}`)
+                                    }}
+                                />
+                            }
+                        />
+
+                        <Route
+                            path="/trades/:tradeId"
+                            element={<TradeDetailsPage/>}
+                        />
 
 
-                    <Route
-                        path="/analytics"
-                        element={<Analytics />}
-                    />
+                        <Route
+                            path="/analytics"
+                            element={<Analytics />}
+                        />
 
-                    <Route
-                        path="/strategies"
-                        element={<Strategies />}
-                    />
+                        <Route
+                            path="/strategies"
+                            element={<Strategies />}
+                        />
 
-                    <Route
-                        path="/behavior"
-                        element={<Behavior />}
-                    />
+                        <Route
+                            path="/behavior"
+                            element={<Behavior />}
+                        />
 
-                    <Route
-                        path="/market-context"
-                        element={<MarketContext />}
-                    />
+                        <Route
+                            path="/market-context"
+                            element={<MarketContext />}
+                        />
 
-                    <Route
-                        path="*"
-                        element={<Navigate to="/dashboard" replace />}
-                    />
+                        <Route
+                            path="*"
+                            element={<Navigate to="/dashboard" replace />}
+                        />
 
-                </Routes>
+                    </Routes>
+
+                </div>
 
             </div>
         </div>
 
-    )
+    );
 
 }
 
@@ -281,10 +291,14 @@ function AppContent() {
     }
 
 
-    return <ProtectedApp
-        onLogout={handleLogout}
-        role={role}
-    />
+    return (
+        <BrokerAccountProvider>
+            <ProtectedApp
+                onLogout={handleLogout}
+                role={role}
+            />
+        </BrokerAccountProvider>
+    )
 
 }
 
@@ -300,3 +314,22 @@ function App() {
 }
 
 export default App
+
+/*
+
+App
+ └── BrowserRouter
+      └── AppContent
+           ├── Login / Signup
+           └── BrokerAccountProvider
+                └── ProtectedApp
+                     ├── Sidebar
+                     └── Routes
+                          ├── Dashboard
+                          ├── Trades
+                          ├── Analytics
+                          ├── Strategies
+                          ├── Behavior
+                          └── Other pages
+
+ */
