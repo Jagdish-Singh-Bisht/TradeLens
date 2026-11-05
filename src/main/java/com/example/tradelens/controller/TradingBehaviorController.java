@@ -43,4 +43,12 @@ public class TradingBehaviorController {
 
     }
 
+    @GetMapping("/behavior/consolidated")
+    public TradingBehaviorResponse getConsolidatedBehavior(Authentication authentication) {
+
+        return tradingBehaviorService.getConsolidatedBehavior(
+                authentication.getName()
+        );
+    }
+
 }

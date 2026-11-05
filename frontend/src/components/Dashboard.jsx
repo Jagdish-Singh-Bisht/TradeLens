@@ -37,11 +37,18 @@ function Dashboard() {
                 setLoading(true);
                 setError(null);
 
-                const urls = [
-                    `http://localhost:8080/api/broker-accounts/${selectedBrokerAccountId}/analytics`,
-                    `http://localhost:8080/api/analytics/strategies/${selectedBrokerAccountId}`,
-                    `http://localhost:8080/api/analytics/behavior/${selectedBrokerAccountId}`
-                ]
+                const urls =
+                    selectedBrokerAccountId === 'ALL'
+                        ? [
+                            'http://localhost:8080/api/analytics/consolidated',
+                            'http://localhost:8080/api/analytics/consolidated/strategies',
+                            'http://localhost:8080/api/analytics/behavior/consolidated'
+                        ]
+                        : [
+                            `http://localhost:8080/api/broker-accounts/${selectedBrokerAccountId}/analytics`,
+                            `http://localhost:8080/api/analytics/strategies/${selectedBrokerAccountId}`,
+                            `http://localhost:8080/api/analytics/behavior/${selectedBrokerAccountId}`
+                        ];
 
                 const responses = await Promise.all(
                     urls.map(url =>

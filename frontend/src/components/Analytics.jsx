@@ -40,8 +40,13 @@ function Analytics() {
                 setAnalytics(null)
                 setAnalyticsError(null)
 
+                const analyticsUrl =
+                    selectedBrokerAccountId === 'ALL'
+                        ? 'http://localhost:8080/api/analytics/consolidated'
+                        : `http://localhost:8080/api/broker-accounts/${selectedBrokerAccountId}/analytics`;
+
                 const response = await fetch(
-                    `http://localhost:8080/api/broker-accounts/${selectedBrokerAccountId}/analytics`,
+                    analyticsUrl,
                     { credentials: 'include' }
                 );
 

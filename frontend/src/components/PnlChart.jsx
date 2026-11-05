@@ -29,8 +29,14 @@ function PnlChart({brokerAccountId}) {
 
         async function loadPnlTrend() {
             try {
+
+                const pnlTrendUrl =
+                    brokerAccountId === 'ALL'
+                        ? 'http://localhost:8080/api/analytics/consolidated/pnl-trend'
+                        : `http://localhost:8080/api/broker-accounts/${brokerAccountId}/analytics/pnl-trend`;
+
                 const response = await fetch(
-                    `http://localhost:8080/api/broker-accounts/${brokerAccountId}/analytics/pnl-trend`,
+                    pnlTrendUrl,
                     { credentials: 'include' }
                 );
 

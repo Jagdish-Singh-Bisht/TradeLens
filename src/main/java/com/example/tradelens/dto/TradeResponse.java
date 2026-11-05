@@ -4,6 +4,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 public record TradeResponse(
+        Long brokerAccountId,
+        String brokerName,
+        String accountName,
         Long id,
         String symbol,
         String exchange,

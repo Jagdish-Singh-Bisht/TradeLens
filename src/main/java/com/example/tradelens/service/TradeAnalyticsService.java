@@ -37,6 +37,14 @@ public class TradeAnalyticsService {
 
     }
 
+    public TradeAnalyticsResponse getConsolidatedAnalytics(String username) {
+
+        List<Trade> trades = tradeRepository
+                .findByBrokerAccount_User_Username(username);
+
+        return analyticsCalculator.calculate(trades);
+    }
+
     private BigDecimal calculateWinRate(long winningTrades, long totalTrades) {
 
         if(totalTrades == 0){
@@ -82,10 +90,7 @@ public class TradeAnalyticsService {
 
     }
 
-    public List<PnlTrendResponse> getPnlTrend(BrokerAccount brokerAccount) {
-
-        List<Trade> trades = tradeRepository
-                .findByBrokerAccount(brokerAccount);
+    private List<PnlTrendResponse> buildPnlTrend(List<Trade> trades) {
 
         trades.sort((a, b) -> a.getExitTime().compareTo(b.getExitTime()));
 
@@ -109,11 +114,26 @@ public class TradeAnalyticsService {
             );
 
             tradeNumber++;
-
         }
 
         return result;
+    }
 
+    public List<PnlTrendResponse> getPnlTrend(BrokerAccount brokerAccount) {
+
+        List<Trade> trades = tradeRepository
+                .findByBrokerAccount(brokerAccount);
+
+        return buildPnlTrend(trades);
+
+    }
+
+    public List<PnlTrendResponse> getConsolidatedPnlTrend(String username) {
+
+        List<Trade> trades = tradeRepository
+                .findByBrokerAccount_User_Username(username);
+
+        return buildPnlTrend(trades);
     }
 
 

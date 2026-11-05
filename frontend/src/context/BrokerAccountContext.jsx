@@ -11,6 +11,8 @@ const BrokerAccountContext = createContext(null);
 
 const STORAGE_KEY = 'tradelens.selectedBrokerAccountId';
 
+const ALL_ACCOUNTS = 'ALL';
+
 export function BrokerAccountProvider({ children }) {
 
     const [accounts, setAccounts] = useState([]);
@@ -56,9 +58,10 @@ export function BrokerAccountProvider({ children }) {
                 account => String(account.id) === String(savedAccountId)
             );
 
-            const accountId = String(
-                existingAccount ? existingAccount.id : result[0].id
-            );
+            const accountId =
+                savedAccountId === ALL_ACCOUNTS
+                    ? ALL_ACCOUNTS
+                    : String(existingAccount ? existingAccount.id : result[0].id);
 
             setSelectedBrokerAccountId(accountId);
             localStorage.setItem(STORAGE_KEY, accountId);
@@ -74,11 +77,9 @@ export function BrokerAccountProvider({ children }) {
 
     const selectBrokerAccount = useCallback((accountId) => {
 
-        const accountExists = accounts.some(
-            account => String(account.id) === String(accountId)
-        );
+        if(accountId !== ALL_ACCOUNTS &&
+            !accounts.some(account => String(account.id) === String(accountId))) {
 
-        if(!accountExists) {
             return;
         }
 

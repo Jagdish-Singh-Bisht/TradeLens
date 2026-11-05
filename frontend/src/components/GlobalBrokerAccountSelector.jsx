@@ -35,6 +35,10 @@ function GlobalBrokerAccountSelector() {
                         selectBrokerAccount(event.target.value)
                     }
                 >
+                    <option value="ALL">
+                         All Accounts
+                    </option>
+
                     { accounts.map(account => (
                         <option
                             key={account.id}

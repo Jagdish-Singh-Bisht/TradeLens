@@ -46,5 +46,25 @@ public class StrategyAnalyticsService {
 
     }
 
+    public List<StrategyAnalyticsResponse> getConsolidatedAnalytics(String username) {
+
+        List<Trade> trades = tradeRepository
+                .findByBrokerAccount_User_Username(username);
+
+        Map<String, List<Trade>> tradesByStrategy =
+                trades.stream()
+                        .filter(trade -> trade.getDecision() != null)
+                        .collect(Collectors.groupingBy(
+                                trade -> trade.getDecision().getStrategy()
+                        ));
+
+        return tradesByStrategy.entrySet()
+                .stream()
+                .map(entry -> new StrategyAnalyticsResponse(
+                        entry.getKey(),
+                        analyticsCalculator.calculate(entry.getValue())
+                ))
+                .toList();
+    }
 
 }
