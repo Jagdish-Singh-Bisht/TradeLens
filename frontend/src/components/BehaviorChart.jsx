@@ -11,6 +11,7 @@ import {
 } from 'recharts'
 
 import './PnlChart.css'
+import behavior from "./Behavior.jsx";
 
 function BehaviorChart({brokerAccountId}) {
 
@@ -28,8 +29,14 @@ function BehaviorChart({brokerAccountId}) {
 
         async function loadBehavior() {
             try {
+
+                const behaviorUrl =
+                    brokerAccountId === 'ALL'
+                        ? 'http://localhost:8080/api/analytics/behavior/consolidated'
+                        : `http://localhost:8080/api/analytics/behavior/${brokerAccountId}`;
+
                 const response = await fetch(
-                    `http://localhost:8080/api/analytics/behavior/${brokerAccountId}`,
+                    behaviorUrl,
                     { credentials: 'include' }
                 );
 

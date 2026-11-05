@@ -43,8 +43,14 @@ function Trades({ onSelectTrade, role }) {
         setError('')
 
         try {
+
+            const tradesUrl =
+                selectedBrokerAccountId === 'ALL'
+                    ? 'http://localhost:8080/api/trades/consolidated'
+                    : `http://localhost:8080/api/trades/broker-account/${selectedBrokerAccountId}`;
+
             const tradesResponse = await fetch(
-                `http://localhost:8080/api/trades/broker-account/${selectedBrokerAccountId}`,
+                tradesUrl,
                 { credentials: 'include' }
             );
 
@@ -136,9 +142,11 @@ function Trades({ onSelectTrade, role }) {
             const csrfData = await csrfResponse.json()
             const formData = new FormData()
 
-            if (!selectedBrokerAccountId) {
+            if (!selectedBrokerAccountId ||
+                selectedBrokerAccountId === 'ALL') {
+
                 throw new Error(
-                    'Create a broker account before importing executions.'
+                    'Please select a specific broker account before importing executions.'
                 );
             }
 
@@ -294,7 +302,11 @@ function Trades({ onSelectTrade, role }) {
 
                     <button
                         onClick={handleUpload}
-                        disabled={!file || importing}
+                        disabled={
+                            !file ||
+                            importing ||
+                            selectedBrokerAccountId === 'ALL'
+                        }
                     >
                         {importing ? 'Importing...' : 'Import CSV'}
                     </button>
@@ -412,6 +424,11 @@ function Trades({ onSelectTrade, role }) {
                             <thead>
                             <tr>
                                 <th>Symbol</th>
+
+                                {selectedBrokerAccountId === 'ALL' && (
+                                    <th>Broker Account</th>
+                                )}
+
                                 <th>Quantity</th>
                                 <th>Entry Price</th>
                                 <th>Exit Price</th>
@@ -447,6 +464,13 @@ function Trades({ onSelectTrade, role }) {
                                         <td>
                                             {trade.symbol || '—'}
                                         </td>
+
+                                        {selectedBrokerAccountId === 'ALL' && (
+                                            <td>
+                                                {trade.brokerName || '—'} · #{trade.brokerAccountId ?? '—' }
+                                            </td>
+                                        )}
+
                                         <td>{trade.quantity ?? '—'}</td>
                                         <td>{formatPrice(trade.entryPrice)}</td>
                                         <td>{formatPrice(trade.exitPrice)}</td>

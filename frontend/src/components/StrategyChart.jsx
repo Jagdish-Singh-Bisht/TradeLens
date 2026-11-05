@@ -28,8 +28,14 @@ function StrategyChart({brokerAccountId}) {
 
         async function loadStrategies() {
             try {
+
+                const strategiesUrl =
+                    brokerAccountId === 'ALL'
+                        ? 'http://localhost:8080/api/analytics/consolidated/strategies'
+                        : `http://localhost:8080/api/analytics/strategies/${brokerAccountId}`;
+
                 const response = await fetch(
-                    `http://localhost:8080/api/analytics/strategies/${brokerAccountId}`,
+                    strategiesUrl,
                     { credentials: 'include' }
                 );
 

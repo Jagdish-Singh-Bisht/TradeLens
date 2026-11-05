@@ -18,6 +18,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.Comparator;
 import java.util.List;
 
 
@@ -79,6 +80,9 @@ public class TradeController {
         );
 
         return new TradeResponse(
+                trade.getBrokerAccount().getId(),
+                trade.getBrokerAccount().getBrokerName(),
+                trade.getBrokerAccount().getAccountName(),
                 trade.getId(),
                 trade.getInstrument() != null
                         ? trade.getInstrument().getSymbol() : null,
@@ -93,6 +97,20 @@ public class TradeController {
                 decisionResponse
 
         );
+    }
+
+    @GetMapping("/consolidated")
+    public List<TradeResponse> getConsolidatedTrades(Authentication authentication) {
+
+        return tradeRepository
+                .findByBrokerAccount_User_Username(authentication.getName())
+                .stream()
+                .sorted(Comparator.comparing(
+                        Trade::getExitTime,
+                        Comparator.nullsLast(Comparator.naturalOrder())
+                ))
+                .map(this::toTradeResponse)
+                .toList();
     }
 
 }

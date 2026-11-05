@@ -24,34 +24,7 @@ public class TradingBehaviorService {
         List<Trade> trades = tradeRepository
                 .findByBrokerAccount(brokerAccount);
 
-        long totalTrades = trades.stream()
-                .filter(trade -> trade.getDecision() != null)
-                .count();
-
-        long earlyExits = trades.stream()
-                .filter(this::isEarlyExit)
-                .count();
-
-        long lateEntries = trades.stream()
-                .filter(this::isLateEntry)
-                .count();
-
-        long stopLossHits = trades.stream()
-                .filter(this::isStopLossHit)
-                .count();
-
-        long targetHits = trades.stream()
-                .filter(this::isTargetHit)
-                .count();
-
-        return new TradingBehaviorResponse(
-                totalTrades,
-                earlyExits,
-                lateEntries,
-                stopLossHits,
-                targetHits
-        );
-
+        return calculateBehavior(trades);
     }
 
     private boolean isEarlyExit(Trade trade) {
@@ -92,6 +65,46 @@ public class TradingBehaviorService {
 
         return trade.getExitPrice()
                 .compareTo(trade.getDecision().getTarget()) >= 0;
+    }
+
+    private TradingBehaviorResponse calculateBehavior(List<Trade> trades) {
+
+        long totalTrades = trades.stream()
+                .filter(trade -> trade.getDecision() != null)
+                .count();
+
+        long earlyExits = trades.stream()
+                .filter(this::isEarlyExit)
+                .count();
+
+        long lateEntries = trades.stream()
+                .filter(this::isLateEntry)
+                .count();
+
+        long stopLossHits = trades.stream()
+                .filter(this::isStopLossHit)
+                .count();
+
+        long targetHits = trades.stream()
+                .filter(this::isTargetHit)
+                .count();
+
+        return new TradingBehaviorResponse(
+                totalTrades,
+                earlyExits,
+                lateEntries,
+                stopLossHits,
+                targetHits
+        );
+
+    }
+
+    public TradingBehaviorResponse getConsolidatedBehavior(String username) {
+
+        List<Trade> trades = tradeRepository
+                .findByBrokerAccount_User_Username(username);
+
+        return calculateBehavior(trades);
     }
 
 }

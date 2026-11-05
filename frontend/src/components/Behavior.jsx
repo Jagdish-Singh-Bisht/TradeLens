@@ -50,8 +50,13 @@
                     setBehavior(null);
                     setError('');
 
+                    const behaviorUrl =
+                        selectedBrokerAccountId === 'ALL'
+                            ? 'http://localhost:8080/api/analytics/behavior/consolidated'
+                            : `http://localhost:8080/api/analytics/behavior/${selectedBrokerAccountId}`;
+
                     const response = await fetch(
-                        `http://localhost:8080/api/analytics/behavior/${selectedBrokerAccountId}`,
+                        behaviorUrl,
                         { credentials: 'include' }
                     );
 

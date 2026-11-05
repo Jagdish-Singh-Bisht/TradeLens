@@ -49,8 +49,13 @@ function Strategies() {
                 setError('');
                 setStrategies(null);
 
+                const strategiesUrl =
+                    selectedBrokerAccountId === 'ALL'
+                        ? 'http://localhost:8080/api/analytics/consolidated/strategies'
+                        : `http://localhost:8080/api/analytics/strategies/${selectedBrokerAccountId}`;
+
                 const response = await fetch(
-                    `http://localhost:8080/api/analytics/strategies/${selectedBrokerAccountId}`,
+                    strategiesUrl,
                     { credentials: 'include' }
                 );
 

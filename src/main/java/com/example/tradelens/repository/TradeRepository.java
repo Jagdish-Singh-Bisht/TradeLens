@@ -23,4 +23,6 @@ public interface TradeRepository extends JpaRepository<Trade, Long> {
             String username
     );
 
+    List<Trade> findByBrokerAccount_User_Username(String username);
+
 }
