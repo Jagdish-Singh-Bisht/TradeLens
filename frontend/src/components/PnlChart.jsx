@@ -13,7 +13,7 @@ import {
     ReferenceLine
 } from 'recharts'
 
-function PnlChart({brokerAccountId}) {
+function PnlChart({ brokerAccountId, startDate, endDate }) {
 
     const [data, setData] = useState([])
 
@@ -30,10 +30,15 @@ function PnlChart({brokerAccountId}) {
         async function loadPnlTrend() {
             try {
 
+                const dateQuery =
+                    startDate && endDate
+                        ? `?startDate=${startDate}&endDate=${endDate}`
+                        : '';
+
                 const pnlTrendUrl =
                     brokerAccountId === 'ALL'
-                        ? 'http://localhost:8080/api/analytics/consolidated/pnl-trend'
-                        : `http://localhost:8080/api/broker-accounts/${brokerAccountId}/analytics/pnl-trend`;
+                        ? `http://localhost:8080/api/analytics/consolidated/pnl-trend${dateQuery}`
+                        : `http://localhost:8080/api/broker-accounts/${brokerAccountId}/analytics/pnl-trend${dateQuery}`;
 
                 const response = await fetch(
                     pnlTrendUrl,
@@ -70,7 +75,7 @@ function PnlChart({brokerAccountId}) {
             cancelled = true;
         };
 
-    }, [brokerAccountId]);
+    }, [brokerAccountId, startDate, endDate]);
 
 
     return (

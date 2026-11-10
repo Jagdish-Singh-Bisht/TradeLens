@@ -3,6 +3,8 @@ import './Analytics.css'
 import SummaryCard from './SummaryCard'
 import { useEffect, useState } from 'react'
 
+import { useDateRange } from '../context/DateRangeContext'
+
 function Analytics() {
 
     const {
@@ -11,12 +13,24 @@ function Analytics() {
         error: accountsError
     } = useBrokerAccount();
 
+    const {
+        startDate,
+        endDate,
+        dateFilterError
+    } = useDateRange()
+
     const [analytics, setAnalytics] = useState(null)
     const [analyticsError, setAnalyticsError] = useState(null)
 
     useEffect(() => {
 
         if(accountsLoading) return;
+
+        if (dateFilterError) {
+            setAnalytics(null)
+            setAnalyticsError(null)
+            return
+        }
 
         if(accountsError) {
             setAnalytics(null);
@@ -40,10 +54,15 @@ function Analytics() {
                 setAnalytics(null)
                 setAnalyticsError(null)
 
+                const dateQuery =
+                    startDate && endDate
+                        ? `?startDate=${startDate}&endDate=${endDate}`
+                        : ''
+
                 const analyticsUrl =
                     selectedBrokerAccountId === 'ALL'
-                        ? 'http://localhost:8080/api/analytics/consolidated'
-                        : `http://localhost:8080/api/broker-accounts/${selectedBrokerAccountId}/analytics`;
+                        ? `http://localhost:8080/api/analytics/consolidated${dateQuery}`
+                        : `http://localhost:8080/api/broker-accounts/${selectedBrokerAccountId}/analytics${dateQuery}`
 
                 const response = await fetch(
                     analyticsUrl,
@@ -85,9 +104,17 @@ function Analytics() {
             cancelled = true;
         };
 
-    }, [selectedBrokerAccountId, accountsLoading, accountsError]);
+    }, [selectedBrokerAccountId, accountsLoading, accountsError, startDate, endDate, dateFilterError]);
 
-
+    if (dateFilterError) {
+        return (
+            <main className="analytics">
+                <h2>Trading Analytics</h2>
+                <p>{dateFilterError}</p>
+                <p>Change the date range from the Dashboard.</p>
+            </main>
+        )
+    }
 
     if (accountsLoading) {
         return (
