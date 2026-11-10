@@ -8,6 +8,7 @@ import SummaryCard from './SummaryCard';
 import './Dashboard.css';
 
 import { useBrokerAccount} from '../context/BrokerAccountContext';
+import { useDateRange } from '../context/DateRangeContext';
 
 
 function Dashboard() {
@@ -17,6 +18,18 @@ function Dashboard() {
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
     const [refreshKey, setRefreshKey] = useState(0);
+
+    const {
+        dateRange,
+        setDateRange,
+        customStartDate,
+        setCustomStartDate,
+        customEndDate,
+        setCustomEndDate,
+        startDate,
+        endDate,
+        dateFilterError
+    } = useDateRange();
 
     const {
         accounts,
@@ -30,6 +43,11 @@ function Dashboard() {
     useEffect(() => {
         if(!selectedBrokerAccountId) return;
 
+        if (dateFilterError) {
+            setLoading(false);
+            return;
+        }
+
         let cancelled = false;
 
         async function loadDashboard() {
@@ -37,17 +55,22 @@ function Dashboard() {
                 setLoading(true);
                 setError(null);
 
+                const dateQuery =
+                    startDate && endDate
+                        ? `?startDate=${startDate}&endDate=${endDate}`
+                        : '';
+
                 const urls =
                     selectedBrokerAccountId === 'ALL'
                         ? [
-                            'http://localhost:8080/api/analytics/consolidated',
-                            'http://localhost:8080/api/analytics/consolidated/strategies',
-                            'http://localhost:8080/api/analytics/behavior/consolidated'
+                            `http://localhost:8080/api/analytics/consolidated${dateQuery}`,
+                            `http://localhost:8080/api/analytics/consolidated/strategies${dateQuery}`,
+                            `http://localhost:8080/api/analytics/behavior/consolidated${dateQuery}`
                         ]
                         : [
-                            `http://localhost:8080/api/broker-accounts/${selectedBrokerAccountId}/analytics`,
-                            `http://localhost:8080/api/analytics/strategies/${selectedBrokerAccountId}`,
-                            `http://localhost:8080/api/analytics/behavior/${selectedBrokerAccountId}`
+                            `http://localhost:8080/api/broker-accounts/${selectedBrokerAccountId}/analytics${dateQuery}`,
+                            `http://localhost:8080/api/analytics/strategies/${selectedBrokerAccountId}${dateQuery}`,
+                            `http://localhost:8080/api/analytics/behavior/${selectedBrokerAccountId}${dateQuery}`
                         ];
 
                 const responses = await Promise.all(
@@ -106,7 +129,7 @@ function Dashboard() {
             cancelled = true;
         }
 
-    }, [selectedBrokerAccountId, refreshKey]);
+    }, [selectedBrokerAccountId, refreshKey, startDate, endDate, dateFilterError]);
 
     if(accountsLoading) {
         return (
@@ -159,8 +182,10 @@ function Dashboard() {
         return (
             <main className="dashboard">
                 <div className="dashboard-heading">
-                    <h2>Trading Overview</h2>
-                    <p>Review your overall trading performance.</p>
+                    <div>
+                        <h2>Trading Overview</h2>
+                        <p>Review your overall trading performance.</p>
+                    </div>
                 </div>
 
                 <div className="dashboard-empty">
@@ -197,9 +222,47 @@ function Dashboard() {
     return (
         <main className="dashboard">
             <div className="dashboard-heading">
-                <h2>Trading Overview</h2>
-                <p>Review your overall trading performance.</p>
+                <div>
+                    <h2>Trading Overview</h2>
+                    <p>Review your overall trading performance.</p>
+                </div>
+
+                <div className="date-filter">
+                    <select
+                        value={dateRange}
+                        onChange={(e) => setDateRange(e.target.value)}
+                    >
+                        <option value="LAST_7_DAYS">Last 7 Days</option>
+                        <option value="LAST_30_DAYS">Last 30 Days</option>
+                        <option value="LAST_90_DAYS">Last 90 Days</option>
+                        <option value="CUSTOM">Custom Range</option>
+                        <option value="ALL_TIME">All Time</option>
+                    </select>
+
+                    {dateRange === 'CUSTOM' && (
+                        <div className="custom-date-filter">
+                            <input
+                                type="date"
+                                value={customStartDate}
+                                onChange={(e) => setCustomStartDate(e.target.value)}
+                            />
+
+                            <input
+                                type="date"
+                                value={customEndDate}
+                                onChange={(e) => setCustomEndDate(e.target.value)}
+                            />
+                        </div>
+                    )}
+
+                    {dateFilterError && (
+                        <p className="date-filter-error">
+                            {dateFilterError}
+                        </p>
+                    )}
+                </div>
             </div>
+
 
             <section className="dashboard-section">
                 <div className="dashboard-section-header">
@@ -219,7 +282,11 @@ function Dashboard() {
             </section>
 
             <section className="dashboard-section">
-                <PnlChart brokerAccountId={selectedBrokerAccountId} />
+                <PnlChart
+                    brokerAccountId={selectedBrokerAccountId}
+                    startDate={startDate}
+                    endDate={endDate}
+                />
             </section>
 
             <section className="dashboard-section">
@@ -228,8 +295,17 @@ function Dashboard() {
                 </div>
 
                 <div className="dashboard-analysis-grid">
-                    <TradePnlChart brokerAccountId={selectedBrokerAccountId} />
-                    <StrategyChart brokerAccountId={selectedBrokerAccountId} />
+                    <TradePnlChart
+                        brokerAccountId={selectedBrokerAccountId}
+                        startDate={startDate}
+                        endDate={endDate}
+                    />
+
+                    <StrategyChart
+                        brokerAccountId={selectedBrokerAccountId}
+                        startDate={startDate}
+                        endDate={endDate}
+                    />
                 </div>
 
                 <div className="dashboard-subsection">
@@ -300,7 +376,11 @@ function Dashboard() {
                     />
                 </div>
 
-                <BehaviorChart brokerAccountId={selectedBrokerAccountId} />
+                <BehaviorChart
+                    brokerAccountId={selectedBrokerAccountId}
+                    startDate={startDate}
+                    endDate={endDate}
+                />
             </section>
         </main>
     );

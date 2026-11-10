@@ -7,9 +7,13 @@ import com.example.tradelens.entity.BrokerAccount;
 import com.example.tradelens.dto.TradeAnalyticsResponse;
 import com.example.tradelens.repository.TradeRepository;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.RoundingMode;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -31,16 +35,28 @@ public class TradeAnalyticsService {
 
     public TradeAnalyticsResponse getAnalytics(BrokerAccount brokerAccount) {
 
-       List<Trade> trades = tradeRepository.findByBrokerAccount(brokerAccount);
-
-       return analyticsCalculator.calculate(trades);
-
+       return getAnalytics(brokerAccount, null, null);
     }
+
+    public TradeAnalyticsResponse getAnalytics(BrokerAccount brokerAccount,
+                                               LocalDate startDate,
+                                               LocalDate endDate ) {
+
+        List<Trade> trades = getTrades(brokerAccount, null, startDate, endDate);
+        return analyticsCalculator.calculate(trades);
+    }
+
 
     public TradeAnalyticsResponse getConsolidatedAnalytics(String username) {
 
-        List<Trade> trades = tradeRepository
-                .findByBrokerAccount_User_Username(username);
+        return getConsolidatedAnalytics(username, null, null);
+    }
+
+    public TradeAnalyticsResponse getConsolidatedAnalytics(String username,
+                                                           LocalDate startDate,
+                                                           LocalDate endDate) {
+
+        List<Trade> trades = getTrades(null, username, startDate, endDate);
 
         return analyticsCalculator.calculate(trades);
     }
@@ -121,19 +137,73 @@ public class TradeAnalyticsService {
 
     public List<PnlTrendResponse> getPnlTrend(BrokerAccount brokerAccount) {
 
-        List<Trade> trades = tradeRepository
-                .findByBrokerAccount(brokerAccount);
+        return getPnlTrend(brokerAccount, null, null);
+    }
+
+    public List<PnlTrendResponse> getPnlTrend(BrokerAccount brokerAccount,
+                                              LocalDate startDate,
+                                              LocalDate endDate) {
+
+        List<Trade> trades = getTrades(brokerAccount, null, startDate, endDate);
 
         return buildPnlTrend(trades);
-
     }
 
     public List<PnlTrendResponse> getConsolidatedPnlTrend(String username) {
 
-        List<Trade> trades = tradeRepository
-                .findByBrokerAccount_User_Username(username);
+        return getConsolidatedPnlTrend(username, null, null);
+    }
+
+    public List<PnlTrendResponse> getConsolidatedPnlTrend(String username,
+                                                          LocalDate startDate,
+                                                          LocalDate endDate) {
+
+        List<Trade> trades = getTrades(null, username, startDate, endDate);
 
         return buildPnlTrend(trades);
+    }
+
+    private List<Trade> getTrades(BrokerAccount brokerAccount,
+                                  String username,
+                                  LocalDate startDate,
+                                  LocalDate endDate) {
+
+        if ((startDate == null) != (endDate == null)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "Both startDate and endDate must be provided"
+            );
+        }
+
+        if (startDate != null && startDate.isAfter(endDate)) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "startDate cannot be after endDate"
+            );
+        }
+
+        if(startDate == null && endDate == null) {
+            if(brokerAccount != null) {
+                return tradeRepository.findByBrokerAccount(brokerAccount);
+            }
+
+            return tradeRepository.findByBrokerAccount_User_Username(username);
+        }
+
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime endExclusive = endDate.plusDays(1).atStartOfDay();
+
+        if(brokerAccount != null) {
+            return tradeRepository
+                    .findByBrokerAccountAndExitTimeGreaterThanEqualAndExitTimeLessThan(
+                            brokerAccount, start, endExclusive
+                    );
+        }
+
+        return tradeRepository
+                .findByBrokerAccount_User_UsernameAndExitTimeGreaterThanEqualAndExitTimeLessThan(
+                        username, start, endExclusive
+                );
     }
 
 

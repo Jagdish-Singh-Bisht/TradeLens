@@ -14,6 +14,8 @@
 
     import { useBrokerAccount } from '../context/BrokerAccountContext'
 
+    import { useDateRange } from '../context/DateRangeContext';
+
 
     function Behavior() {
 
@@ -25,6 +27,12 @@
 
         const [behavior, setBehavior] = useState(null)
         const [error, setError] = useState('')
+
+        const {
+            startDate,
+            endDate,
+            dateFilterError
+        } = useDateRange();
 
         useEffect(() => {
 
@@ -42,6 +50,12 @@
                 return;
             }
 
+            if (dateFilterError) {
+                setBehavior(null);
+                setError('');
+                return;
+            }
+
             let cancelled = false;
 
             async function loadBehavior() {
@@ -50,10 +64,15 @@
                     setBehavior(null);
                     setError('');
 
+                    const dateQuery =
+                        startDate && endDate
+                            ? `?startDate=${startDate}&endDate=${endDate}`
+                            : '';
+
                     const behaviorUrl =
                         selectedBrokerAccountId === 'ALL'
-                            ? 'http://localhost:8080/api/analytics/behavior/consolidated'
-                            : `http://localhost:8080/api/analytics/behavior/${selectedBrokerAccountId}`;
+                            ? `http://localhost:8080/api/analytics/behavior/consolidated${dateQuery}`
+                            : `http://localhost:8080/api/analytics/behavior/${selectedBrokerAccountId}${dateQuery}`;
 
                     const response = await fetch(
                         behaviorUrl,
@@ -86,7 +105,7 @@
                 cancelled = true;
             }
 
-        }, [selectedBrokerAccountId, accountsLoading, accountsError]);
+        }, [selectedBrokerAccountId, accountsLoading, accountsError, startDate, endDate, dateFilterError]);
 
         if (accountsLoading) {
             return (
@@ -122,6 +141,16 @@
                     <p>{error}</p>
                 </main>
             )
+        }
+
+        if (dateFilterError) {
+            return (
+                <main className="behavior">
+                    <h2>Trading Behavior</h2>
+                    <p>{dateFilterError}</p>
+                    <p>Change the date range from the Dashboard.</p>
+                </main>
+            );
         }
 
         if (!behavior) {

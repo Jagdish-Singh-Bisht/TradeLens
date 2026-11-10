@@ -13,6 +13,8 @@ import {
 
 import { useBrokerAccount } from '../context/BrokerAccountContext'
 
+import { useDateRange } from '../context/DateRangeContext'
+
 function Strategies() {
 
     const {
@@ -21,6 +23,12 @@ function Strategies() {
         error: accountsError
     } = useBrokerAccount()
 
+    const {
+        startDate,
+        endDate,
+        dateFilterError
+    } = useDateRange()
+
     const [strategies, setStrategies] = useState(null)
     const [error, setError] = useState('')
 
@@ -28,6 +36,12 @@ function Strategies() {
     useEffect(() => {
 
         if(accountsLoading) return;
+
+        if (dateFilterError) {
+            setStrategies(null)
+            setError('')
+            return
+        }
 
         if(accountsError) {
             setStrategies([]);
@@ -49,10 +63,15 @@ function Strategies() {
                 setError('');
                 setStrategies(null);
 
+                const dateQuery =
+                    startDate && endDate
+                        ? `?startDate=${startDate}&endDate=${endDate}`
+                        : ''
+
                 const strategiesUrl =
                     selectedBrokerAccountId === 'ALL'
-                        ? 'http://localhost:8080/api/analytics/consolidated/strategies'
-                        : `http://localhost:8080/api/analytics/strategies/${selectedBrokerAccountId}`;
+                        ? `http://localhost:8080/api/analytics/consolidated/strategies${dateQuery}`
+                        : `http://localhost:8080/api/analytics/strategies/${selectedBrokerAccountId}${dateQuery}`
 
                 const response = await fetch(
                     strategiesUrl,
@@ -90,7 +109,17 @@ function Strategies() {
             cancelled = true;
         };
 
-    }, [selectedBrokerAccountId, accountsLoading, accountsError]);
+    }, [selectedBrokerAccountId, accountsLoading, accountsError, startDate, endDate, dateFilterError]);
+
+    if (dateFilterError) {
+        return (
+            <main className="strategies">
+                <h2>Strategy Performance</h2>
+                <p>{dateFilterError}</p>
+                <p>Change the date range from the Dashboard.</p>
+            </main>
+        )
+    }
 
     if (accountsLoading) {
         return (

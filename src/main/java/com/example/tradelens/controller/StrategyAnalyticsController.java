@@ -6,16 +6,19 @@ import com.example.tradelens.dto.StrategyAnalyticsResponse;
 import com.example.tradelens.repository.BrokerAccountRepository;
 import com.example.tradelens.service.StrategyAnalyticsService;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
 
 import lombok.RequiredArgsConstructor;
 
+import java.time.LocalDate;
 import java.util.List;
 
 
@@ -30,9 +33,15 @@ public class StrategyAnalyticsController {
     private final BrokerAccountRepository  brokerAccountRepository;
 
     @GetMapping("/strategies/{brokerAccountId}")
-    public List<StrategyAnalyticsResponse> getStrategyAnalytics(
-            @PathVariable Long brokerAccountId,
-            Authentication authentication) {
+    public List<StrategyAnalyticsResponse> getStrategyAnalytics(@PathVariable Long brokerAccountId,
+                                                                Authentication authentication,
+                                                                @RequestParam(required = false)
+                                                                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                                                                LocalDate startDate,
+
+                                                                @RequestParam(required = false)
+                                                                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                                                                LocalDate endDate) {
 
         BrokerAccount brokerAccount = brokerAccountRepository
                 .findByIdAndUser_Username(
@@ -44,7 +53,8 @@ public class StrategyAnalyticsController {
                         "Broker account not found"
                 ));
 
-        return strategyAnalyticsService.getAnalytics(brokerAccount);
-
+        return strategyAnalyticsService.getAnalytics(
+                brokerAccount, startDate, endDate
+        );
     }
 }

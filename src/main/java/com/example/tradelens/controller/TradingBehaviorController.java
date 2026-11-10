@@ -8,11 +8,17 @@ import com.example.tradelens.service.TradingBehaviorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.time.LocalDate;
+
+
 
 @RestController
 @RequestMapping("/api/analytics")
@@ -25,9 +31,15 @@ public class TradingBehaviorController {
 
 
     @GetMapping("/behavior/{brokerAccountId}")
-    public TradingBehaviorResponse getBehavior(
-            @PathVariable Long brokerAccountId,
-            Authentication authentication) {
+    public TradingBehaviorResponse getBehavior(@PathVariable Long brokerAccountId,
+                                               Authentication authentication,
+                                               @RequestParam(required = false)
+                                               @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                                               LocalDate startDate,
+
+                                               @RequestParam(required = false)
+                                               @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                                               LocalDate endDate) {
 
         BrokerAccount brokerAccount = brokerAccountRepository
                 .findByIdAndUser_Username(
@@ -39,16 +51,24 @@ public class TradingBehaviorController {
                         "Broker account not found"
                 ));
 
-        return tradingBehaviorService.getBehavior(brokerAccount);
+        return tradingBehaviorService.getBehavior(
+                brokerAccount, startDate, endDate
+        );
 
     }
 
     @GetMapping("/behavior/consolidated")
-    public TradingBehaviorResponse getConsolidatedBehavior(Authentication authentication) {
+    public TradingBehaviorResponse getConsolidatedBehavior(Authentication authentication,
+                                                           @RequestParam(required = false)
+                                                           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                                                           LocalDate startDate,
+
+                                                           @RequestParam(required = false)
+                                                           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+                                                           LocalDate endDate) {
 
         return tradingBehaviorService.getConsolidatedBehavior(
-                authentication.getName()
-        );
+                authentication.getName(), startDate, endDate);
     }
 
 }

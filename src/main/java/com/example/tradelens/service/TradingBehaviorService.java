@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 
@@ -20,10 +22,15 @@ public class TradingBehaviorService {
     private final TradeRepository tradeRepository;
 
     public TradingBehaviorResponse getBehavior(BrokerAccount brokerAccount) {
+        return getBehavior(brokerAccount, null, null);
+    }
 
-        List<Trade> trades = tradeRepository
-                .findByBrokerAccount(brokerAccount);
-
+    public TradingBehaviorResponse getBehavior(
+            BrokerAccount brokerAccount,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        List<Trade> trades = getTrades(brokerAccount, null, startDate, endDate);
         return calculateBehavior(trades);
     }
 
@@ -100,11 +107,44 @@ public class TradingBehaviorService {
     }
 
     public TradingBehaviorResponse getConsolidatedBehavior(String username) {
+        return getConsolidatedBehavior(username, null, null);
+    }
 
-        List<Trade> trades = tradeRepository
-                .findByBrokerAccount_User_Username(username);
-
+    public TradingBehaviorResponse getConsolidatedBehavior(
+            String username,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        List<Trade> trades = getTrades(null, username, startDate, endDate);
         return calculateBehavior(trades);
+    }
+
+    private List<Trade> getTrades(
+            BrokerAccount brokerAccount,
+            String username,
+            LocalDate startDate,
+            LocalDate endDate
+    ) {
+        if (startDate == null && endDate == null) {
+            if (brokerAccount != null) {
+                return tradeRepository.findByBrokerAccount(brokerAccount);
+            }
+
+            return tradeRepository.findByBrokerAccount_User_Username(username);
+        }
+
+        LocalDateTime start = startDate.atStartOfDay();
+        LocalDateTime endExclusive = endDate.plusDays(1).atStartOfDay();
+
+        if (brokerAccount != null) {
+            return tradeRepository
+                    .findByBrokerAccountAndExitTimeGreaterThanEqualAndExitTimeLessThan(
+                            brokerAccount, start, endExclusive);
+        }
+
+        return tradeRepository
+                .findByBrokerAccount_User_UsernameAndExitTimeGreaterThanEqualAndExitTimeLessThan(
+                        username, start, endExclusive);
     }
 
 }

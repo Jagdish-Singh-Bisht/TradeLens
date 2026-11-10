@@ -1,3 +1,4 @@
+import { DateRangeProvider } from './context/DateRangeContext';
 import GlobalBrokerAccountSelector from './components/GlobalBrokerAccountSelector';
 import MarketContext from './components/MarketContext'
 import Behavior from "./components/Behavior.jsx";
@@ -293,10 +294,12 @@ function AppContent() {
 
     return (
         <BrokerAccountProvider>
-            <ProtectedApp
-                onLogout={handleLogout}
-                role={role}
-            />
+            <DateRangeProvider>
+                <ProtectedApp
+                    onLogout={handleLogout}
+                    role={role}
+                />
+            </DateRangeProvider>
         </BrokerAccountProvider>
     )
 

@@ -11,9 +11,8 @@ import {
 } from 'recharts'
 
 import './PnlChart.css'
-import behavior from "./Behavior.jsx";
 
-function BehaviorChart({brokerAccountId}) {
+function BehaviorChart({brokerAccountId, startDate, endDate}) {
 
     const [data, setData] = useState([])
 
@@ -30,10 +29,15 @@ function BehaviorChart({brokerAccountId}) {
         async function loadBehavior() {
             try {
 
+                const dateQuery =
+                    startDate && endDate
+                        ? `?startDate=${startDate}&endDate=${endDate}`
+                        : '';
+
                 const behaviorUrl =
                     brokerAccountId === 'ALL'
-                        ? 'http://localhost:8080/api/analytics/behavior/consolidated'
-                        : `http://localhost:8080/api/analytics/behavior/${brokerAccountId}`;
+                        ? `http://localhost:8080/api/analytics/behavior/consolidated${dateQuery}`
+                        : `http://localhost:8080/api/analytics/behavior/${brokerAccountId}${dateQuery}`;
 
                 const response = await fetch(
                     behaviorUrl,
@@ -71,12 +75,7 @@ function BehaviorChart({brokerAccountId}) {
             cancelled = true;
         };
 
-    }, [brokerAccountId]);
-
-
-    if (data === null) {
-        return <p>Loading behavior chart...</p>
-    }
+    }, [brokerAccountId, startDate, endDate]);
 
     return (
 

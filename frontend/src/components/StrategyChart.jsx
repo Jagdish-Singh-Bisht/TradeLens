@@ -12,7 +12,7 @@ import {
 
 import './PnlChart.css'
 
-function StrategyChart({brokerAccountId}) {
+function StrategyChart({brokerAccountId, startDate, endDate}) {
 
     const [data, setData] = useState([])
 
@@ -29,10 +29,15 @@ function StrategyChart({brokerAccountId}) {
         async function loadStrategies() {
             try {
 
+                const dateQuery =
+                    startDate && endDate
+                        ? `?startDate=${startDate}&endDate=${endDate}`
+                        : '';
+
                 const strategiesUrl =
                     brokerAccountId === 'ALL'
-                        ? 'http://localhost:8080/api/analytics/consolidated/strategies'
-                        : `http://localhost:8080/api/analytics/strategies/${brokerAccountId}`;
+                        ? `http://localhost:8080/api/analytics/consolidated/strategies${dateQuery}`
+                        : `http://localhost:8080/api/analytics/strategies/${brokerAccountId}${dateQuery}`;
 
                 const response = await fetch(
                     strategiesUrl,
@@ -74,7 +79,7 @@ function StrategyChart({brokerAccountId}) {
             cancelled = true;
         };
 
-    }, [brokerAccountId]);
+    }, [brokerAccountId, startDate, endDate]);
 
 
     return (
