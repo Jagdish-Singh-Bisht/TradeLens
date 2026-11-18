@@ -22,6 +22,9 @@ function Analytics() {
     const [analytics, setAnalytics] = useState(null)
     const [analyticsError, setAnalyticsError] = useState(null)
 
+    const [riskAnalytics, setRiskAnalytics] = useState(null)
+    const [riskAnalyticsError, setRiskAnalyticsError] = useState(null)
+
     useEffect(() => {
 
         if(accountsLoading) return;
@@ -105,6 +108,73 @@ function Analytics() {
         };
 
     }, [selectedBrokerAccountId, accountsLoading, accountsError, startDate, endDate, dateFilterError]);
+
+    useEffect(() => {
+
+        if(accountsLoading) return;
+
+        if(dateFilterError || accountsError || !selectedBrokerAccountId) {
+            setRiskAnalytics(null);
+            setRiskAnalyticsError(null);
+            return;
+        }
+
+        let cancelled = false;
+
+        async function loadRiskAnalytics() {
+
+            try {
+                setRiskAnalytics(null);
+                setRiskAnalyticsError(null);
+
+                const params = new URLSearchParams();
+
+                if(selectedBrokerAccountId !== 'ALL') {
+                    params.append('brokerAccountId', selectedBrokerAccountId);
+                }
+
+                if(startDate && endDate) {
+                    params.append('startDate', startDate);
+                    params.append('endDate', endDate);
+                }
+
+                const queryString = params.toString();
+
+                const url = `http://localhost:8080/api/risk-analytics${queryString ? `?${queryString}` : '' }`;
+
+                const response = await fetch(url, {
+                    credentials: 'include'
+                })
+
+                if(!response.ok) {
+                    throw new Error(
+                        `Failed to load risk analytics: HTTP ${response.status}`
+                    );
+                }
+
+                const result = await response.json();
+
+                if(!cancelled) {
+                    setRiskAnalytics(result);
+                }
+
+            } catch (error) {
+
+                if(!cancelled) {
+                    console.error('Error loading risk analytics:', error);
+                    setRiskAnalyticsError(error.message || 'Unable to load risk analytics.');
+                }
+            }
+        }
+
+        loadRiskAnalytics();
+
+        return () => {
+            cancelled = true;
+        }
+
+    }, [selectedBrokerAccountId, accountsLoading, accountsError, startDate, endDate, dateFilterError]);
+
 
     if (dateFilterError) {
         return (
@@ -212,6 +282,54 @@ function Analytics() {
                 />
 
             </div>
+
+            <section className="risk-analytics-section">
+
+                <div className="risk-analytics-heading">
+                    <h3>Risk Analytics</h3>
+                    <p>
+                        Understand trading consistency, downside risk, and recovery performance.
+                    </p>
+                </div>
+
+                {riskAnalyticsError ? (
+                    <p className="risk-analytics-error">{riskAnalyticsError}</p>
+                ) : !riskAnalytics ? (
+                    <p>Loading risk analytics...</p>
+                ) : (
+                    <div className="analytics-grid">
+
+                        <SummaryCard
+                            title="Trading Expectancy"
+                            value={`Rs.${riskAnalytics.expectancy}`}
+                        />
+
+                        <SummaryCard
+                            title="Maximum Drawdown"
+                            value={`Rs.${riskAnalytics.maximumDrawdown}`}
+                            type="loss"
+                        />
+
+                        <SummaryCard
+                          title="Maximum Consecutive Wins"
+                          value={riskAnalytics.maximumConsecutiveWins}
+                        />
+
+                        <SummaryCard
+                            title="Maximum Consecutive Losses"
+                            value={riskAnalytics.maximumConsecutiveLosses}
+                        />
+
+                        <SummaryCard
+                            title="Recovery Factor"
+                            value={riskAnalytics.recoveryFactor ?? 'N/A'}
+                        />
+
+                    </div>
+
+                )}
+
+            </section>
 
         </main>
 
